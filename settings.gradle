@@ -5,4 +5,4 @@ pluginManagement {
         gradlePluginPortal()
     }
 }
-rootProject.name = 'projectreactor'
+rootProject.name = 'projectreactor-retry-aop'

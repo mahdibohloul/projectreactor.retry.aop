@@ -1,6 +1,7 @@
 package io.github.mahdibohloul.projectreactor.retry.aop.annotation;
 
 import java.lang.annotation.*;
+
 import org.springframework.context.annotation.EnableAspectJAutoProxy;
 import org.springframework.context.annotation.Import;
 import org.springframework.core.Ordered;
@@ -20,12 +21,10 @@ import org.springframework.core.Ordered;
 @Documented
 public @interface EnableReactiveRetry {
     /**
-     * The order of the reactive retryable aop. The default value is
-     * {@link Ordered#LOWEST_PRECEDENCE}.
+     * Indicate whether subclass-based (CGLIB) proxies are to be created as opposed to
+     * standard Java interface-based proxies. The default is {@code false}.
      *
-     * @return The order of the reactive retryable aop.
+     * @return whether to proxy or not to proxy the class
      */
-    int order() default Ordered.LOWEST_PRECEDENCE;
-
     boolean proxyTargetClass() default false;
 }

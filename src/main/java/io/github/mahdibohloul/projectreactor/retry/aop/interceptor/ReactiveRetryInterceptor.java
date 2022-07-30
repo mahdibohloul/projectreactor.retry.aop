@@ -7,6 +7,11 @@ import reactor.core.publisher.Flux;
 import reactor.core.publisher.Mono;
 import reactor.util.retry.Retry;
 
+/**
+ * Abstract class for reactive retry interceptor.
+ *
+ * @author Mahdi Bohloul
+ */
 public abstract class ReactiveRetryInterceptor implements MethodInterceptor {
 
     private final Retry retryPolicy;
@@ -15,6 +20,14 @@ public abstract class ReactiveRetryInterceptor implements MethodInterceptor {
         this.retryPolicy = retryPolicy;
     }
 
+    /**
+     * Retry the given invocation using the configured retry policy.
+     * This function uses project reactor's retry mechanism to provide retry support.
+     *
+     * @param invocation the method invocation joinpoint
+     * @return the result of the invocation
+     * @throws Throwable if the invocation fails
+     */
     @Override
     public Object invoke(MethodInvocation invocation) throws Throwable {
         if (!isPublisher(invocation.getMethod().getReturnType()))
