@@ -1,12 +1,10 @@
 package io.github.mahdibohloul.projectreactor.retry.aop.annotation;
 
 import io.github.mahdibohloul.projectreactor.retry.aop.interceptor.ReactiveRetryInterceptorBuilder;
-
 import java.lang.annotation.Annotation;
 import java.lang.reflect.Method;
 import java.util.concurrent.ConcurrentHashMap;
 import java.util.concurrent.ConcurrentMap;
-
 import org.aopalliance.intercept.MethodInterceptor;
 import org.aopalliance.intercept.MethodInvocation;
 import org.springframework.aop.IntroductionInterceptor;
@@ -15,16 +13,14 @@ import org.springframework.beans.factory.BeanFactory;
 import org.springframework.beans.factory.BeanFactoryAware;
 import org.springframework.context.expression.BeanFactoryResolver;
 import org.springframework.core.annotation.AnnotatedElementUtils;
-import org.springframework.expression.common.TemplateParserContext;
-import org.springframework.expression.spel.standard.SpelExpressionParser;
 import org.springframework.expression.spel.support.StandardEvaluationContext;
 import org.springframework.util.ConcurrentReferenceHashMap;
 import org.springframework.util.StringUtils;
 
-
 /**
- * Enable reactive retryable aop capability. It is invoking and delegates to an appropriate
- * {@link MethodInterceptor} based on the {@link ReactiveRetryable} annotation.
+ * Enable reactive retryable aop capability. It is invoking and delegates to an
+ * appropriate {@link MethodInterceptor} based on the {@link ReactiveRetryable}
+ * annotation.
  */
 public class AnnotationAwareReactiveRetryOperationsInterceptor implements IntroductionInterceptor, BeanFactoryAware {
 
@@ -35,15 +31,16 @@ public class AnnotationAwareReactiveRetryOperationsInterceptor implements Introd
 
     private final StandardEvaluationContext evaluationContext = new StandardEvaluationContext();
 
-    private final ConcurrentReferenceHashMap<Object, ConcurrentMap<Method, MethodInterceptor>> delegates =
-            new ConcurrentReferenceHashMap<>();
+    private final ConcurrentReferenceHashMap<Object, ConcurrentMap<Method, MethodInterceptor>> delegates = new ConcurrentReferenceHashMap<>();
 
     private BeanFactory beanFactory;
 
     /**
-     * This method is invoked by the Spring container to create a new instance of the interceptor.
+     * This method is invoked by the Spring container to create a new instance of
+     * the interceptor.
      *
-     * @param invocation the method invocation joinpoint
+     * @param invocation
+     *            the method invocation joinpoint
      * @throws Throwable
      */
     @Override
@@ -141,8 +138,9 @@ public class AnnotationAwareReactiveRetryOperationsInterceptor implements Introd
     /**
      * Set the bean factory that this object runs in.
      *
-     * @param beanFactory owning BeanFactory (never {@code null}).
-     *                    The bean can immediately call methods on the factory.
+     * @param beanFactory
+     *            owning BeanFactory (never {@code null}). The bean can immediately
+     *            call methods on the factory.
      * @throws BeansException
      */
     @Override

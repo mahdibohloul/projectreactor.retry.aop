@@ -3,7 +3,8 @@ package io.github.mahdibohloul.projectreactor.retry.aop.interceptor;
 import reactor.util.retry.RetrySpec;
 
 /**
- * MaxInRowReactiveRetryInterceptor is a reactive retry interceptor that retries the invocation in a row.
+ * MaxInRowReactiveRetryInterceptor is a reactive retry interceptor that retries
+ * the invocation in a row.
  *
  * @author Mahdi Bohloul
  */

@@ -2,7 +2,6 @@ package io.github.mahdibohloul.projectreactor.retry.aop.interceptor;
 
 import java.time.Duration;
 import java.util.function.Predicate;
-
 import org.aopalliance.intercept.MethodInterceptor;
 import org.springframework.util.Assert;
 import reactor.util.retry.Retry;
@@ -12,7 +11,8 @@ import reactor.util.retry.RetrySpec;
 /**
  * Builder for reactive retry interceptor.
  *
- * @param <T> the type of the {@link MethodInterceptor}
+ * @param <T>
+ *            the type of the {@link MethodInterceptor}
  * @author Mahdi Bohloul
  */
 public abstract class ReactiveRetryInterceptorBuilder<T extends MethodInterceptor> {
@@ -23,7 +23,8 @@ public abstract class ReactiveRetryInterceptorBuilder<T extends MethodIntercepto
     /**
      * Sets the maximum number of attempts that should be made.
      *
-     * @param maxAttempts the maximum number of attempts that should be made.
+     * @param maxAttempts
+     *            the maximum number of attempts that should be made.
      * @return the builder
      */
     public ReactiveRetryInterceptorBuilder<T> setMaxAttempts(long maxAttempts) {
@@ -35,9 +36,11 @@ public abstract class ReactiveRetryInterceptorBuilder<T extends MethodIntercepto
     }
 
     /**
-     * Sets the types of exceptions that should be retried. If this array is empty, all
+     * Sets the types of exceptions that should be retried. If this array is empty,
+     * all
      *
-     * @param retryOn the types of exceptions that should be retried.
+     * @param retryOn
+     *            the types of exceptions that should be retried.
      * @return the builder
      */
     public ReactiveRetryInterceptorBuilder<T> setInclude(Class<? extends Throwable>[] retryOn) {
@@ -47,10 +50,11 @@ public abstract class ReactiveRetryInterceptorBuilder<T extends MethodIntercepto
     }
 
     /**
-     * Sets the types of exception that should be excluded from retry. If this array is
-     * empty, no exceptions will be excluded.
+     * Sets the types of exception that should be excluded from retry. If this array
+     * is empty, no exceptions will be excluded.
      *
-     * @param excludeFromRetryOn the types of exceptions that should be excluded from retry.
+     * @param excludeFromRetryOn
+     *            the types of exceptions that should be excluded from retry.
      * @return the builder
      */
     public ReactiveRetryInterceptorBuilder<T> setExclude(Class<? extends Throwable>[] excludeFromRetryOn) {
@@ -127,7 +131,7 @@ public abstract class ReactiveRetryInterceptorBuilder<T extends MethodIntercepto
      */
     public static class MaxAttemptsRetryInterceptorBuilder
             extends
-            ReactiveRetryInterceptorBuilder<MaxAttemptsReactiveRetryInterceptor> {
+                ReactiveRetryInterceptorBuilder<MaxAttemptsReactiveRetryInterceptor> {
 
         @Override
         public MaxAttemptsReactiveRetryInterceptor build() {
@@ -164,7 +168,7 @@ public abstract class ReactiveRetryInterceptorBuilder<T extends MethodIntercepto
      */
     public static class FixedDelayRetryInterceptorBuilder
             extends
-            ReactiveRetryInterceptorBuilder<FixedDelayReactiveRetryInterceptor> {
+                ReactiveRetryInterceptorBuilder<FixedDelayReactiveRetryInterceptor> {
 
         private long fixedDelay;
 
@@ -208,7 +212,7 @@ public abstract class ReactiveRetryInterceptorBuilder<T extends MethodIntercepto
      */
     public static class MaxInRowRetryInterceptorBuilder
             extends
-            ReactiveRetryInterceptorBuilder<MaxInRowReactiveRetryInterceptor> {
+                ReactiveRetryInterceptorBuilder<MaxInRowReactiveRetryInterceptor> {
         @Override
         public MaxInRowReactiveRetryInterceptor build() {
             RetrySpec retrySpec = Retry.maxInARow(this.maxAttempts);
@@ -244,7 +248,7 @@ public abstract class ReactiveRetryInterceptorBuilder<T extends MethodIntercepto
      */
     public static class BackOffRetryInterceptorBuilder
             extends
-            ReactiveRetryInterceptorBuilder<BackOffReactiveRetryInterceptor> {
+                ReactiveRetryInterceptorBuilder<BackOffReactiveRetryInterceptor> {
         private long minDelay = -1;
         private long maxDelay = -1;
         private double backOffFactor = -1.0;

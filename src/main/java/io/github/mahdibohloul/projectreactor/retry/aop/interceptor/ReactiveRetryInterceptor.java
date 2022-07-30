@@ -21,12 +21,14 @@ public abstract class ReactiveRetryInterceptor implements MethodInterceptor {
     }
 
     /**
-     * Retry the given invocation using the configured retry policy.
-     * This function uses project reactor's retry mechanism to provide retry support.
+     * Retry the given invocation using the configured retry policy. This function
+     * uses project reactor's retry mechanism to provide retry support.
      *
-     * @param invocation the method invocation joinpoint
+     * @param invocation
+     *            the method invocation joinpoint
      * @return the result of the invocation
-     * @throws Throwable if the invocation fails
+     * @throws Throwable
+     *             if the invocation fails
      */
     @Override
     public Object invoke(MethodInvocation invocation) throws Throwable {
