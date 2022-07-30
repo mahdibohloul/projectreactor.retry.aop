@@ -1,4 +1,4 @@
-# ProjectReactor Retry AOP [![License: MIT](https://img.shields.io/badge/License-MIT-yellow.svg)](https://opensource.org/licenses/MIT)
+# ProjectReactor Retry AOP [![License: MIT](https://img.shields.io/badge/License-MIT-yellow.svg)](https://opensource.org/licenses/MIT) [![Java CI with Gradle](https://github.com/mahdibohloul/projectreactor.retry.aop/actions/workflows/gradle.yml/badge.svg?branch=master)](https://github.com/mahdibohloul/projectreactor.retry.aop/actions/workflows/gradle.yml)
 
 This project uses [projectreactor](https://projectreactor.io/) retry mechanism
 and [spring AOP](https://docs.spring.io/spring-framework/docs/2.5.x/reference/aop.html) to retry failed reactive
