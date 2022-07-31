@@ -19,13 +19,13 @@ to your project:
 <dependency>
     <groupId>io.github.mahdibohloul</groupId>
     <artifactId>projectreactor-retry-aop</artifactId>
-    <version>1.0.0</version>
+    <version>1.1.0</version>
     <type>pom</type>
 </dependency>
 ```
 
 ```groovy
-implementation 'io.github.mahdibohloul:projectreactor-retry-aop:1.0.0'
+implementation 'io.github.mahdibohloul:projectreactor-retry-aop:1.1.0'
 ```
 
 ### Declarative Example
@@ -76,3 +76,7 @@ If you have any questions or comments, please open an issue or open a pull reque
 
 ***If you can improve this project, do not hesitate to contribute with me. I'm waiting for your merge requests with open
 arms.***
+
+## ChangeLog
+
+##### 1.1.0: Change java version from 17 to 11 for source compatibility
