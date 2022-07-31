@@ -133,7 +133,13 @@ public class ReactiveRetryConfiguration extends AbstractPointcutAdvisor
         }
     }
 
-    private record AnnotationMethodResolver(Class<? extends Annotation> annotationType) {
+    private static class AnnotationMethodResolver {
+
+        private final Class<? extends Annotation> annotationType;
+
+        public AnnotationMethodResolver(Class<? extends Annotation> annotationType) {
+            this.annotationType = annotationType;
+        }
 
         public boolean hasAnnotatedMethods(Class<?> clazz) {
             final AtomicBoolean found = new AtomicBoolean(false);
