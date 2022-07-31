@@ -10,6 +10,24 @@ This section provides a quick introduction to getting started with ProjectReacto
 
 ### Add Dependencies
 
+You can add the
+following [maven dependencies](https://search.maven.org/artifact/io.github.mahdibohloul/projectreactor-retry-aop/1.0.0/pom)
+to your project:
+
+```xml
+
+<dependency>
+    <groupId>io.github.mahdibohloul</groupId>
+    <artifactId>projectreactor-retry-aop</artifactId>
+    <version>1.0.0</version>
+    <type>pom</type>
+</dependency>
+```
+
+```groovy
+implementation 'io.github.mahdibohloul:projectreactor-retry-aop:1.0.0'
+```
+
 ### Declarative Example
 
 The following example shows how to use ProjectReactor Retry AOP in a declarative fashion.
