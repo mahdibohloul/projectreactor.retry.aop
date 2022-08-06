@@ -12,7 +12,7 @@ import reactor.core.publisher.Mono;
 
 public class ApplicationTests {
     @Configuration
-    @EnableReactiveRetry
+    @EnableReactiveRetry(order = 1)
     public static class TestConfiguration {
         @Bean
         public static PropertySourcesPlaceholderConfigurer pspc() {

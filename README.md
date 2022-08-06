@@ -63,6 +63,9 @@ By default, ProjectReactor Retry AOP uses the `ReactiveRetryInterceptor` to inte
 on the `@ReactiveRetryable` annotation attributes. You can use your own interceptor by implementing the
 `MethodInterceptor` and pass the name of your interceptor bean to the `ReactiveRetryable` annotation.
 
+**Version 1.2.0**: In this version you can specify the order of the interceptor bean in the `EnableReactiveRetry`
+annotation.
+
 ## API
 
 ProjectReactor Retry AOP uses project reactor's retry mechanism in underlying reactive operations.
@@ -80,3 +83,5 @@ arms.***
 ## ChangeLog
 
 ##### 1.1.0: Change java version from 17 to 11 for source compatibility
+
+##### 1.2.0: Add order field to the `EnableReactiveRetry` annotation
