@@ -3,6 +3,7 @@ package io.github.mahdibohloul.projectreactor.retry.aop.annotation;
 import java.lang.annotation.Annotation;
 import java.lang.reflect.Method;
 import java.util.LinkedHashSet;
+import java.util.Map;
 import java.util.Set;
 import java.util.concurrent.atomic.AtomicBoolean;
 import org.aopalliance.aop.Advice;
@@ -21,8 +22,11 @@ import org.springframework.beans.factory.BeanFactoryAware;
 import org.springframework.beans.factory.InitializingBean;
 import org.springframework.beans.factory.SmartInitializingSingleton;
 import org.springframework.beans.factory.config.BeanDefinition;
+import org.springframework.context.annotation.ImportAware;
 import org.springframework.context.annotation.Role;
+import org.springframework.core.Ordered;
 import org.springframework.core.annotation.AnnotationUtils;
+import org.springframework.core.type.AnnotationMetadata;
 import org.springframework.stereotype.Component;
 import org.springframework.util.ReflectionUtils;
 
@@ -39,7 +43,8 @@ public class ReactiveRetryConfiguration extends AbstractPointcutAdvisor
             IntroductionAdvisor,
             BeanFactoryAware,
             InitializingBean,
-            SmartInitializingSingleton {
+            SmartInitializingSingleton,
+            ImportAware {
 
     private AnnotationAwareReactiveRetryOperationsInterceptor advice;
 
@@ -103,6 +108,18 @@ public class ReactiveRetryConfiguration extends AbstractPointcutAdvisor
                 res.union(filter);
         }
         return res;
+    }
+
+    @Override
+    public void setImportMetadata(AnnotationMetadata importMetadata) {
+        Map<String, Object> annotationAttributes = importMetadata
+                .getAnnotationAttributes(EnableReactiveRetry.class.getName());
+        if (annotationAttributes != null) {
+            int order = annotationAttributes.get("order") instanceof Integer
+                    ? (Integer) annotationAttributes.get("order")
+                    : Ordered.LOWEST_PRECEDENCE;
+            setOrder(order);
+        }
     }
 
     private static final class AnnotationClassOrMethodPointcut extends StaticMethodMatcherPointcut {
