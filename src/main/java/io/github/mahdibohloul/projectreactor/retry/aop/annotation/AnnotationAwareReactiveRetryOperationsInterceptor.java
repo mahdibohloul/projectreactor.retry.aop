@@ -41,7 +41,6 @@ public class AnnotationAwareReactiveRetryOperationsInterceptor implements Introd
      *
      * @param invocation
      *            the method invocation joinpoint
-     * @throws Throwable
      */
     @Override
     public Object invoke(MethodInvocation invocation) throws Throwable {
@@ -141,7 +140,6 @@ public class AnnotationAwareReactiveRetryOperationsInterceptor implements Introd
      * @param beanFactory
      *            owning BeanFactory (never {@code null}). The bean can immediately
      *            call methods on the factory.
-     * @throws BeansException
      */
     @Override
     public void setBeanFactory(BeanFactory beanFactory) throws BeansException {

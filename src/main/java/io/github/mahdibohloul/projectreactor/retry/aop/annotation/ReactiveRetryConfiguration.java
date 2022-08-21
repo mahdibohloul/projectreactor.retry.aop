@@ -34,7 +34,7 @@ import org.springframework.util.ReflectionUtils;
  * Basic configuration for {@link ReactiveRetryable @ReactiveRetryable}
  * processing.
  *
- * @author: Mahdi Bohloul
+ * @author Mahdi Bohloul
  */
 @Role(BeanDefinition.ROLE_INFRASTRUCTURE)
 @Component

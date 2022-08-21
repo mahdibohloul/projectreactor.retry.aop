@@ -19,13 +19,13 @@ to your project:
 <dependency>
     <groupId>io.github.mahdibohloul</groupId>
     <artifactId>projectreactor-retry-aop</artifactId>
-    <version>1.1.0</version>
+    <version>1.2.1</version>
     <type>pom</type>
 </dependency>
 ```
 
 ```groovy
-implementation 'io.github.mahdibohloul:projectreactor-retry-aop:1.1.0'
+implementation 'io.github.mahdibohloul:projectreactor-retry-aop:1.2.1'
 ```
 
 ### Declarative Example
@@ -85,3 +85,5 @@ arms.***
 ##### 1.1.0: Change java version from 17 to 11 for source compatibility
 
 ##### 1.2.0: Add order field to the `EnableReactiveRetry` annotation
+
+##### 1.2.1: Fix missing sources in maven publications
