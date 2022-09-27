@@ -1,7 +1,6 @@
 package io.github.mahdibohloul.projectreactor.retry.aop.interceptor;
 
 import java.time.Duration;
-import java.util.function.Predicate;
 import org.aopalliance.intercept.MethodInterceptor;
 import org.springframework.util.Assert;
 import reactor.util.retry.Retry;
@@ -106,22 +105,19 @@ public abstract class ReactiveRetryInterceptorBuilder<T extends MethodIntercepto
         return new MaxAttemptsRetryInterceptorBuilder();
     }
 
-    protected Predicate<? super Throwable> errorFilter(Class<? extends Throwable>[] retryOn,
-            Class<? extends Throwable>[] excludeFromRetryOn) {
-        return throwable -> {
-            for (Class<? extends Throwable> ex : this.excludeFromRetryOn) {
-                if (ex.isAssignableFrom(throwable.getClass()))
-                    return false;
-            }
-            if (this.retryOn.length == 0)
-                return true;
+    protected boolean errorFilter(Throwable throwable) {
+        for (Class<? extends Throwable> ex : this.excludeFromRetryOn) {
+            if (ex.isAssignableFrom(throwable.getClass()))
+                return false;
+        }
+        if (this.retryOn.length == 0)
+            return true;
 
-            for (Class<? extends Throwable> ex : this.retryOn) {
-                if (ex.isAssignableFrom(throwable.getClass()))
-                    return true;
-            }
-            return false;
-        };
+        for (Class<? extends Throwable> ex : this.retryOn) {
+            if (ex.isAssignableFrom(throwable.getClass()))
+                return true;
+        }
+        return false;
     }
 
     /**
@@ -135,8 +131,7 @@ public abstract class ReactiveRetryInterceptorBuilder<T extends MethodIntercepto
 
         @Override
         public MaxAttemptsReactiveRetryInterceptor build() {
-            RetrySpec retrySpec = Retry.max(this.maxAttempts)
-                    .filter(errorFilter(this.retryOn, this.excludeFromRetryOn));
+            RetrySpec retrySpec = Retry.max(this.maxAttempts).filter(this::errorFilter);
             return new MaxAttemptsReactiveRetryInterceptor(retrySpec);
         }
 
@@ -175,7 +170,7 @@ public abstract class ReactiveRetryInterceptorBuilder<T extends MethodIntercepto
         @Override
         public FixedDelayReactiveRetryInterceptor build() {
             RetryBackoffSpec retrySpec = Retry.fixedDelay(this.maxAttempts, Duration.ofMillis(this.fixedDelay))
-                    .filter(errorFilter(this.retryOn, this.excludeFromRetryOn));
+                    .filter(this::errorFilter);
             return new FixedDelayReactiveRetryInterceptor(retrySpec);
         }
 
@@ -216,7 +211,7 @@ public abstract class ReactiveRetryInterceptorBuilder<T extends MethodIntercepto
         @Override
         public MaxInRowReactiveRetryInterceptor build() {
             RetrySpec retrySpec = Retry.maxInARow(this.maxAttempts);
-            retrySpec = retrySpec.filter(errorFilter(this.retryOn, this.excludeFromRetryOn));
+            retrySpec = retrySpec.filter(this::errorFilter);
             return new MaxInRowReactiveRetryInterceptor(retrySpec);
         }
 
@@ -255,14 +250,14 @@ public abstract class ReactiveRetryInterceptorBuilder<T extends MethodIntercepto
 
         @Override
         public BackOffReactiveRetryInterceptor build() {
-            RetryBackoffSpec retryBackoffSpec = Retry.backoff(this.maxAttempts, Duration.ofMillis(100));
+            RetryBackoffSpec retryBackoffSpec = Retry.backoff(this.maxAttempts, Duration.ofMillis(100))
+                    .filter(this::errorFilter);
             if (this.minDelay > 0)
                 retryBackoffSpec = retryBackoffSpec.minBackoff(Duration.ofMillis(this.minDelay));
             if (this.maxDelay > 0)
                 retryBackoffSpec = retryBackoffSpec.maxBackoff(Duration.ofMillis(this.maxDelay));
             if (this.backOffFactor > 0)
                 retryBackoffSpec = retryBackoffSpec.jitter(this.backOffFactor);
-            retryBackoffSpec.filter(errorFilter(this.retryOn, this.excludeFromRetryOn));
 
             return new BackOffReactiveRetryInterceptor(retryBackoffSpec);
         }

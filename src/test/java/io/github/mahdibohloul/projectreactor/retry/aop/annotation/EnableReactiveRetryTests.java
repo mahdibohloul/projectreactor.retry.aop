@@ -8,9 +8,9 @@ import org.springframework.aop.support.AopUtils;
 import org.springframework.context.annotation.AnnotationConfigApplicationContext;
 import reactor.test.StepVerifier;
 
-public class EnableReactiveRetryTests {
+class EnableReactiveRetryTests {
     @Test
-    public void successfulRetry() {
+    void successfulRetry() {
         AnnotationConfigApplicationContext context = new AnnotationConfigApplicationContext(
                 ApplicationTests.TestConfiguration.class);
         ApplicationTests.Service service = context.getBean(ApplicationTests.Service.class);
@@ -21,7 +21,7 @@ public class EnableReactiveRetryTests {
     }
 
     @Test
-    public void exhaustedRetry() {
+    void exhaustedRetry() {
         AnnotationConfigApplicationContext context = new AnnotationConfigApplicationContext(
                 ApplicationTests.TestConfiguration.class);
         ApplicationTests.Service service = context.getBean(ApplicationTests.Service.class);
@@ -32,7 +32,7 @@ public class EnableReactiveRetryTests {
     }
 
     @Test
-    public void withoutRetryApplication() {
+    void withoutRetryApplication() {
         AnnotationConfigApplicationContext context = new AnnotationConfigApplicationContext(
                 ApplicationTests.WithoutRetryConfiguration.class);
         ApplicationTests.Service service = context.getBean(ApplicationTests.Service.class);
@@ -43,7 +43,7 @@ public class EnableReactiveRetryTests {
     }
 
     @Test
-    public void proxyTargetClass() {
+    void proxyTargetClass() {
         AnnotationConfigApplicationContext context = new AnnotationConfigApplicationContext(
                 ApplicationTests.TestProxyConfiguration.class);
         ApplicationTests.Service service = context.getBean(ApplicationTests.Service.class);
@@ -52,7 +52,7 @@ public class EnableReactiveRetryTests {
     }
 
     @Test
-    public void marker() {
+    void marker() {
         AnnotationConfigApplicationContext context = new AnnotationConfigApplicationContext(
                 ApplicationTests.TestConfiguration.class);
         ApplicationTests.Service service = context.getBean(ApplicationTests.Service.class);
@@ -63,7 +63,7 @@ public class EnableReactiveRetryTests {
     }
 
     @Test
-    public void excludedService() {
+    void excludedService() {
         AnnotationConfigApplicationContext context = new AnnotationConfigApplicationContext(
                 ApplicationTests.TestConfiguration.class);
         ApplicationTests.ExcludesService service = context.getBean(ApplicationTests.ExcludesService.class);
@@ -74,7 +74,31 @@ public class EnableReactiveRetryTests {
     }
 
     @Test
-    public void type() {
+    void inheritedExcludeService() {
+        AnnotationConfigApplicationContext context = new AnnotationConfigApplicationContext(
+                ApplicationTests.TestConfiguration.class);
+        ApplicationTests.InheritedExcludesService service = context
+                .getBean(ApplicationTests.InheritedExcludesService.class);
+        assertThat(AopUtils.isAopProxy(service)).isTrue();
+        StepVerifier.create(service.service()).expectError(ApplicationTests.ChildIllegalStateException.class).verify();
+        assertThat(service.getCount()).isEqualTo(1);
+        context.close();
+    }
+
+    @Test
+    void inheritedExcludeBackOffService() {
+        AnnotationConfigApplicationContext context = new AnnotationConfigApplicationContext(
+                ApplicationTests.TestConfiguration.class);
+        ApplicationTests.InheritedExcludesBackOffService service = context
+                .getBean(ApplicationTests.InheritedExcludesBackOffService.class);
+        assertThat(AopUtils.isAopProxy(service)).isTrue();
+        StepVerifier.create(service.service()).expectError(ApplicationTests.ChildIllegalStateException.class).verify();
+        assertThat(service.getCount()).isEqualTo(1);
+        context.close();
+    }
+
+    @Test
+    void type() {
         AnnotationConfigApplicationContext context = new AnnotationConfigApplicationContext(
                 ApplicationTests.TestConfiguration.class);
         ApplicationTests.RetryableService service = context.getBean(ApplicationTests.RetryableService.class);
@@ -85,7 +109,7 @@ public class EnableReactiveRetryTests {
     }
 
     @Test
-    public void customInterceptor() {
+    void customInterceptor() {
         AnnotationConfigApplicationContext context = new AnnotationConfigApplicationContext(
                 ApplicationTests.TestConfiguration.class);
         ApplicationTests.CustomInterceptorService service = context
