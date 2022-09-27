@@ -37,6 +37,16 @@ public class ApplicationTests {
         }
 
         @Bean
+        public InheritedExcludesService inheritedExcludesService() {
+            return new InheritedExcludesService();
+        }
+
+        @Bean
+        public InheritedExcludesBackOffService inheritedExcludesBackOffService() {
+            return new InheritedExcludesBackOffService();
+        }
+
+        @Bean
         public RetryableService retryableService() {
             return new RetryableService();
         }
@@ -103,6 +113,46 @@ public class ApplicationTests {
             return Mono.defer(() -> {
                 if (this.count++ < 2)
                     return Mono.error(new IllegalStateException("error"));
+                return Mono.empty();
+            });
+        }
+
+        public int getCount() {
+            return count;
+        }
+    }
+
+    public static class ChildIllegalStateException extends IllegalStateException {
+        public ChildIllegalStateException(String s) {
+            super(s);
+        }
+    }
+
+    public static class InheritedExcludesService {
+        private int count = 0;
+
+        @ReactiveRetryable(exclude = {RuntimeException.class})
+        public Mono<Void> service() {
+            return Mono.defer(() -> {
+                if (this.count++ < 2)
+                    return Mono.error(new ChildIllegalStateException("error"));
+                return Mono.empty();
+            });
+        }
+
+        public int getCount() {
+            return count;
+        }
+    }
+
+    public static class InheritedExcludesBackOffService {
+        private int count = 0;
+
+        @ReactiveRetryable(exclude = {RuntimeException.class}, exponentialBackoff = true)
+        public Mono<Void> service() {
+            return Mono.defer(() -> {
+                if (this.count++ < 2)
+                    return Mono.error(new ChildIllegalStateException("error"));
                 return Mono.empty();
             });
         }
