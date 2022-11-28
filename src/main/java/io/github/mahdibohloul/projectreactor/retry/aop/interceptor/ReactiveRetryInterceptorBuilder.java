@@ -1,6 +1,7 @@
 package io.github.mahdibohloul.projectreactor.retry.aop.interceptor;
 
 import java.time.Duration;
+import lombok.extern.slf4j.Slf4j;
 import org.aopalliance.intercept.MethodInterceptor;
 import org.springframework.util.Assert;
 import reactor.util.retry.Retry;
@@ -18,6 +19,10 @@ public abstract class ReactiveRetryInterceptorBuilder<T extends MethodIntercepto
     protected long maxAttempts = 3;
     protected Class<? extends Throwable>[] retryOn = new Class[]{};
     protected Class<? extends Throwable>[] excludeFromRetryOn = new Class[]{};
+    protected static final String DEFAULT_BEFORE_RETRYING_ERROR_MESSAGE = "Retrying method call, attempt: {}";
+    protected static final String DEFAULT_AFTER_RETRYING_ERROR_MESSAGE = "Retried method call, attempt: {}";
+    protected static final String DEFAULT_BEFORE_RETRYING_DEBUG_MESSAGE = "Retrying method call, attempt: {}, with exception: {}";
+    protected static final String DEFAULT_AFTER_RETRYING_DEBUG_MESSAGE = "Retried method call, attempt: {}, with exception: {}";
 
     /**
      * Sets the maximum number of attempts that should be made.
@@ -125,13 +130,20 @@ public abstract class ReactiveRetryInterceptorBuilder<T extends MethodIntercepto
      *
      * @author Mahdi Bohloul
      */
+    @Slf4j
     public static class MaxAttemptsRetryInterceptorBuilder
             extends
                 ReactiveRetryInterceptorBuilder<MaxAttemptsReactiveRetryInterceptor> {
 
         @Override
         public MaxAttemptsReactiveRetryInterceptor build() {
-            RetrySpec retrySpec = Retry.max(this.maxAttempts).filter(this::errorFilter);
+            RetrySpec retrySpec = Retry.max(this.maxAttempts).doBeforeRetry(retrySignal -> {
+                log.error(DEFAULT_BEFORE_RETRYING_ERROR_MESSAGE, retrySignal.totalRetries());
+                log.debug(DEFAULT_BEFORE_RETRYING_DEBUG_MESSAGE, retrySignal.totalRetries(), retrySignal.failure());
+            }).doAfterRetry(retrySignal -> {
+                log.error(DEFAULT_AFTER_RETRYING_ERROR_MESSAGE, retrySignal.totalRetries());
+                log.debug(DEFAULT_AFTER_RETRYING_DEBUG_MESSAGE, retrySignal.totalRetries(), retrySignal.failure());
+            }).filter(this::errorFilter);
             return new MaxAttemptsReactiveRetryInterceptor(retrySpec);
         }
 
@@ -161,6 +173,7 @@ public abstract class ReactiveRetryInterceptorBuilder<T extends MethodIntercepto
      *
      * @author Mahdi Bohloul
      */
+    @Slf4j
     public static class FixedDelayRetryInterceptorBuilder
             extends
                 ReactiveRetryInterceptorBuilder<FixedDelayReactiveRetryInterceptor> {
@@ -170,7 +183,15 @@ public abstract class ReactiveRetryInterceptorBuilder<T extends MethodIntercepto
         @Override
         public FixedDelayReactiveRetryInterceptor build() {
             RetryBackoffSpec retrySpec = Retry.fixedDelay(this.maxAttempts, Duration.ofMillis(this.fixedDelay))
-                    .filter(this::errorFilter);
+                    .doBeforeRetry(retrySignal -> {
+                        log.error(DEFAULT_BEFORE_RETRYING_ERROR_MESSAGE, retrySignal.totalRetries());
+                        log.debug(DEFAULT_BEFORE_RETRYING_DEBUG_MESSAGE, retrySignal.totalRetries(),
+                                retrySignal.failure());
+                    }).doAfterRetry(retrySignal -> {
+                        log.error(DEFAULT_AFTER_RETRYING_ERROR_MESSAGE, retrySignal.totalRetries());
+                        log.debug(DEFAULT_AFTER_RETRYING_DEBUG_MESSAGE, retrySignal.totalRetries(),
+                                retrySignal.failure());
+                    }).filter(this::errorFilter);
             return new FixedDelayReactiveRetryInterceptor(retrySpec);
         }
 
@@ -205,12 +226,19 @@ public abstract class ReactiveRetryInterceptorBuilder<T extends MethodIntercepto
      *
      * @author Mahdi Bohloul
      */
+    @Slf4j
     public static class MaxInRowRetryInterceptorBuilder
             extends
                 ReactiveRetryInterceptorBuilder<MaxInRowReactiveRetryInterceptor> {
         @Override
         public MaxInRowReactiveRetryInterceptor build() {
-            RetrySpec retrySpec = Retry.maxInARow(this.maxAttempts);
+            RetrySpec retrySpec = Retry.maxInARow(this.maxAttempts).doBeforeRetry(retrySignal -> {
+                log.error(DEFAULT_BEFORE_RETRYING_ERROR_MESSAGE, retrySignal.totalRetries());
+                log.debug(DEFAULT_BEFORE_RETRYING_DEBUG_MESSAGE, retrySignal.totalRetries(), retrySignal.failure());
+            }).doAfterRetry(retrySignal -> {
+                log.error(DEFAULT_AFTER_RETRYING_ERROR_MESSAGE, retrySignal.totalRetries());
+                log.debug(DEFAULT_AFTER_RETRYING_DEBUG_MESSAGE, retrySignal.totalRetries(), retrySignal.failure());
+            });
             retrySpec = retrySpec.filter(this::errorFilter);
             return new MaxInRowReactiveRetryInterceptor(retrySpec);
         }
@@ -241,6 +269,7 @@ public abstract class ReactiveRetryInterceptorBuilder<T extends MethodIntercepto
      *
      * @author Mahdi Bohloul
      */
+    @Slf4j
     public static class BackOffRetryInterceptorBuilder
             extends
                 ReactiveRetryInterceptorBuilder<BackOffReactiveRetryInterceptor> {
@@ -251,7 +280,15 @@ public abstract class ReactiveRetryInterceptorBuilder<T extends MethodIntercepto
         @Override
         public BackOffReactiveRetryInterceptor build() {
             RetryBackoffSpec retryBackoffSpec = Retry.backoff(this.maxAttempts, Duration.ofMillis(100))
-                    .filter(this::errorFilter);
+                    .filter(this::errorFilter).doBeforeRetry(retrySignal -> {
+                        log.error(DEFAULT_BEFORE_RETRYING_ERROR_MESSAGE, retrySignal.totalRetries());
+                        log.debug(DEFAULT_BEFORE_RETRYING_DEBUG_MESSAGE, retrySignal.totalRetries(),
+                                retrySignal.failure());
+                    }).doAfterRetry(retrySignal -> {
+                        log.error(DEFAULT_AFTER_RETRYING_ERROR_MESSAGE, retrySignal.totalRetries());
+                        log.debug(DEFAULT_AFTER_RETRYING_DEBUG_MESSAGE, retrySignal.totalRetries(),
+                                retrySignal.failure());
+                    });
             if (this.minDelay > 0)
                 retryBackoffSpec = retryBackoffSpec.minBackoff(Duration.ofMillis(this.minDelay));
             if (this.maxDelay > 0)

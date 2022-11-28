@@ -37,7 +37,7 @@ public abstract class ReactiveRetryInterceptor implements MethodInterceptor {
         if (isMono(invocation.getMethod().getReturnType()))
             return Mono.defer(() -> {
                 try {
-                    return (Mono) invocation.proceed();
+                    return (Mono) ReactiveRetryUtil.invocableClone(invocation).proceed();
                 } catch (Throwable t) {
                     return Mono.error(t);
                 }
@@ -45,7 +45,7 @@ public abstract class ReactiveRetryInterceptor implements MethodInterceptor {
         if (isFlux(invocation.getMethod().getReturnType()))
             return Flux.defer(() -> {
                 try {
-                    return (Flux) invocation.proceed();
+                    return (Flux) ReactiveRetryUtil.invocableClone(invocation).proceed();
                 } catch (Throwable t) {
                     return Flux.error(t);
                 }
