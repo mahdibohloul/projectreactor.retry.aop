@@ -19,13 +19,13 @@ to your project:
 <dependency>
     <groupId>io.github.mahdibohloul</groupId>
     <artifactId>projectreactor-retry-aop</artifactId>
-    <version>1.3.0</version>
+    <version>1.4.0</version>
     <type>pom</type>
 </dependency>
 ```
 
 ```groovy
-implementation 'io.github.mahdibohloul:projectreactor-retry-aop:1.3.0'
+implementation 'io.github.mahdibohloul:projectreactor-retry-aop:1.4.0'
 ```
 
 ### Declarative Example
@@ -89,3 +89,10 @@ arms.***
 ##### 1.2.1: Fix missing sources in maven publications
 
 ##### 1.3.0: Fix retry backoff strategy exception filter
+
+##### 1.4.0: 
+- Add log for before retry and after retry.
+  - *If you want to check the throwable message in the log, you should access it via debug level.*
+- Fix bug in method join point processing on retry interceptor.
+    - detail of the bug:
+      - If you have another annotation on your method such as the `transactional` annotation, the retry interceptor doesn't go to call these annotation in the retrying process.
