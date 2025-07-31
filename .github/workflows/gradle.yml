@@ -76,6 +76,4 @@ jobs:
         uses: softprops/action-gh-release@v1
         with:
           body_path: RELEASE_NOTES.md
-          prerelease: |
-            ${{ contains(github.ref, '-RC') || 
-                contains(github.ref, '-M') }}
+          prerelease: ${{ contains(github.ref, '-RC') || contains(github.ref, '-M') }}
