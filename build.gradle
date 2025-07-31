@@ -8,7 +8,7 @@ plugins {
 }
 
 group = 'io.github.mahdibohloul'
-version = '1.4.0-RC1'
+version = '2.0.0-RC1'
 sourceCompatibility = JavaVersion.VERSION_11
 targetCompatibility = JavaVersion.VERSION_11
 
