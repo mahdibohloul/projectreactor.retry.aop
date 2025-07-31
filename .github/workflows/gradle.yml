@@ -67,13 +67,15 @@ jobs:
             echo "* Initial release" >> RELEASE_NOTES.md
           fi
 
-      - name: Publish to Maven Central
+      - name: Publish to Maven Central (Central SonarType)
         run: ./gradlew publish
         env:
+          # GPG Signing credentials
           ORG_GRADLE_PROJECT_signingKey: ${{ secrets.SIGNING_KEY }}
           ORG_GRADLE_PROJECT_signingPassword: ${{ secrets.SIGNING_PASSWORD }}
-          ORG_GRADLE_PROJECT_ossrhUsername: ${{ secrets.OSSRH_USERNAME }}
-          ORG_GRADLE_PROJECT_ossrhPassword: ${{ secrets.OSSRH_PASSWORD }}
+          # Central SonarType credentials (Central Portal Token)
+          OSSRH_USERNAME: ${{ secrets.CENTRAL_USERNAME }}
+          OSSRH_PASSWORD: ${{ secrets.CENTRAL_PASSWORD }}
 
       - name: Create GitHub Release
         if: startsWith(github.ref, 'refs/tags/')
