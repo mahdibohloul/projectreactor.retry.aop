@@ -61,7 +61,11 @@ jobs:
         run: |
           echo "## What's Changed" > RELEASE_NOTES.md
           echo "" >> RELEASE_NOTES.md
-          git log $(git describe --tags --abbrev=0 HEAD^)..HEAD --pretty=format:"* %s" >> RELEASE_NOTES.md
+          if git tag | grep .; then
+            git log $(git describe --tags --abbrev=0 HEAD^)..HEAD --pretty=format:"* %s" >> RELEASE_NOTES.md
+          else
+            echo "* Initial release" >> RELEASE_NOTES.md
+          fi
 
       - name: Publish to Maven Central
         run: ./gradlew publish
