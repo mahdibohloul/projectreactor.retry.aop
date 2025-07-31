@@ -8,7 +8,7 @@ plugins {
 }
 
 group = 'io.github.mahdibohloul'
-version = '1.4.0'
+version = '1.4.0-RC1'
 sourceCompatibility = JavaVersion.VERSION_11
 targetCompatibility = JavaVersion.VERSION_11
 
@@ -42,53 +42,56 @@ tasks.withType(Sign.class) {
     }
 }
 
-//signing {
-//    sign(publishing.publications)
-//}
-//
-//publishing {
-//    repositories {
-//        maven {
-//            name = "GitHubPackages"
-//            url = uri("https://s01.oss.sonatype.org/service/local/staging/deploy/maven2/")
-//            credentials {
-//                username = project.property("ossrhUsername").toString()
-//                password = project.property("ossrhPassword").toString()
-//            }
-//        }
-//    }
-//
-//    publications {
-//        maven(MavenPublication) {
-//            groupId = project.group.toString()
-//            artifactId = project.name.toString()
-//            version = project.version.toString()
-//            pom {
-//                description.set("ProjectReactor Retry AOP provides convenient retry support for your reactive applications.")
-//                name.set(artifactId)
-//                url.set("https://github.com/mahdibohloul/projectreactor.retry.aop")
-//                licenses {
-//                    license {
-//                        name.set("MIT License")
-//                        url.set("https://opensource.org/licenses/MIT")
-//                        distribution.set("repo")
-//                    }
-//                }
-//                developers {
-//                    developer {
-//                        id.set("mahdibohloul")
-//                        name.set("Mahdi Bohloul")
-//                        email.set("mahdiibohloul@gmail.com")
-//                    }
-//                }
-//                scm {
-//                    url.set("https://github.com/mahdibohloul/projectreactor.retry.aop")
-//                }
-//            }
-//            from(components["java"])
-//        }
-//    }
-//}
+signing {
+    def signingKey = findProperty("signingKey")
+    def signingPassword = findProperty("signingPassword")
+    useInMemoryPgpKeys(signingKey, signingPassword)
+    sign publishing.publications
+}
+
+publishing {
+    repositories {
+        maven {
+            name = "OSSRH"
+            url = uri("https://s01.oss.sonatype.org/service/local/staging/deploy/maven2/")
+            credentials {
+                username = findProperty("ossrhUsername") ?: System.getenv("OSSRH_USERNAME")
+                password = findProperty("ossrhPassword") ?: System.getenv("OSSRH_PASSWORD")
+            }
+        }
+    }
+
+    publications {
+        maven(MavenPublication) {
+            groupId = project.group.toString()
+            artifactId = project.name.toString()
+            version = project.version.toString()
+            pom {
+                description.set("ProjectReactor Retry AOP provides convenient retry support for your reactive applications.")
+                name.set(artifactId)
+                url.set("https://github.com/mahdibohloul/projectreactor.retry.aop")
+                licenses {
+                    license {
+                        name.set("MIT License")
+                        url.set("https://opensource.org/licenses/MIT")
+                        distribution.set("repo")
+                    }
+                }
+                developers {
+                    developer {
+                        id.set("mahdibohloul")
+                        name.set("Mahdi Bohloul")
+                        email.set("mahdiibohloul@gmail.com")
+                    }
+                }
+                scm {
+                    url.set("https://github.com/mahdibohloul/projectreactor.retry.aop")
+                }
+            }
+            from(components["java"])
+        }
+    }
+}
 
 bootJar {
     enabled = false
