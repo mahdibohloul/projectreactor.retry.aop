@@ -4,7 +4,6 @@ plugins {
     id 'java'
     id "com.diffplug.spotless" version "7.0.3"
 
-    id 'signing'
     id("com.vanniktech.maven.publish") version "0.34.0"
 }
 
@@ -13,7 +12,7 @@ version = '2.0.0-RC1'
 
 java {
     toolchain {
-        languageVersion = JavaLanguageVersion.of(17)
+        languageVersion = JavaLanguageVersion.of(21)
     }
 }
 
@@ -28,11 +27,11 @@ configurations {
 }
 
 dependencies {
-    implementation 'org.springframework:spring-context'
-    implementation 'org.springframework:spring-core'
-    implementation 'org.springframework.boot:spring-boot-starter-logging'
+    implementation 'org.springframework:spring-context:6.2.8'
+    implementation 'org.springframework:spring-core:6.2.8'
+    implementation 'org.springframework.boot:spring-boot-starter-logging:3.5.3'
 
-    implementation 'io.projectreactor:reactor-core'
+    implementation 'io.projectreactor:reactor-core:3.7.7'
 
     testImplementation 'org.aspectj:aspectjweaver'
     testImplementation 'org.mockito:mockito-core'
@@ -40,83 +39,36 @@ dependencies {
     testImplementation("org.springframework.boot:spring-boot-starter-test")
 }
 
-tasks.withType(Sign.class).configureEach {
-    onlyIf {
-        !version.toString().endsWith('-SNAPSHOT')
+mavenPublishing {
+    publishToMavenCentral()
+    signAllPublications()
+
+    pom {
+        description.set("ProjectReactor Retry AOP provides convenient retry support for your reactive applications.")
+        url.set("https://github.com/mahdibohloul/projectreactor.retry.aop")
+        licenses {
+            license {
+                name.set("MIT License")
+                url.set("https://opensource.org/licenses/MIT")
+                distribution.set("repo")
+            }
+        }
+        developers {
+            developer {
+                id.set("mahdibohloul")
+                name.set("Mahdi Bohloul")
+                email.set("mahdiibohloul@gmail.com")
+                url.set("https://github.com/mahdibohloul/")
+            }
+        }
+        scm {
+            url.set("https://github.com/mahdibohloul/projectreactor.retry.aop")
+        }
     }
-}
-
-//signing {
-//    def signingKey = findProperty("signingKey")
-//    def signingPassword = findProperty("signingPassword")
-//    useInMemoryPgpKeys(signingKey, signingPassword)
-//    sign publishing.publications
-//}
-
-//publishing {
-//    repositories {
-//        maven {
-//            name = "CentralSonarType"
-//            url = uri("https://ossrh-staging-api.central.sonatype.com/service/local/staging/deploy/maven2/")
-//            credentials {
-//                username = findProperty("ossrhUsername") ?: System.getenv("OSSRH_USERNAME")
-//                password = findProperty("ossrhPassword") ?: System.getenv("OSSRH_PASSWORD")
-//            }
-//        }
-//    }
-//
-//    publications {
-//        maven(MavenPublication) {
-//            groupId = project.group.toString()
-//            artifactId = project.name.toString()
-//            version = project.version.toString()
-//            pom {
-//                description.set("ProjectReactor Retry AOP provides convenient retry support for your reactive applications.")
-//                name.set(artifactId)
-//                url.set("https://github.com/mahdibohloul/projectreactor.retry.aop")
-//                licenses {
-//                    license {
-//                        name.set("MIT License")
-//                        url.set("https://opensource.org/licenses/MIT")
-//                        distribution.set("repo")
-//                    }
-//                }
-//                developers {
-//                    developer {
-//                        id.set("mahdibohloul")
-//                        name.set("Mahdi Bohloul")
-//                        email.set("mahdiibohloul@gmail.com")
-//                    }
-//                }
-//                scm {
-//                    url.set("https://github.com/mahdibohloul/projectreactor.retry.aop")
-//                }
-//            }
-//            from(components["java"])
-//        }
-//    }
-//}
-
-bootJar {
-    enabled = false
-}
-
-jar {
-    enabled = true
-}
-
-java {
-    withSourcesJar()
-    withJavadocJar()
 }
 
 tasks.named('test') {
     useJUnitPlatform()
-}
-
-tasks.named('bootBuildImage') {
-    builder = 'paketobuildpacks/builder:tiny'
-    environment = ['BP_NATIVE_IMAGE': 'true']
 }
 
 spotless {
