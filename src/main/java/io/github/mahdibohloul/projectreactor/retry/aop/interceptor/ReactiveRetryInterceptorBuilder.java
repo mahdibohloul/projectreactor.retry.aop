@@ -23,8 +23,6 @@ public abstract class ReactiveRetryInterceptorBuilder<T extends MethodIntercepto
 	protected Class<? extends Throwable>[] excludeFromRetryOn = new Class[]{};
 	protected static final String DEFAULT_BEFORE_RETRYING_ERROR_MESSAGE = "Retrying method call, attempt: {}";
 	protected static final String DEFAULT_AFTER_RETRYING_ERROR_MESSAGE = "Retried method call, attempt: {}";
-	protected static final String DEFAULT_BEFORE_RETRYING_DEBUG_MESSAGE = "Retrying method call, attempt: {}, with exception: {}";
-	protected static final String DEFAULT_AFTER_RETRYING_DEBUG_MESSAGE = "Retried method call, attempt: {}, with exception: {}";
 
 	/**
 	 * Sets the maximum number of attempts that should be made.
@@ -127,6 +125,10 @@ public abstract class ReactiveRetryInterceptorBuilder<T extends MethodIntercepto
 		return false;
 	}
 
+	protected Throwable unwrapError(Retry spec, Retry.RetrySignal signal) {
+		return signal.failure();
+	}
+
 	/**
 	 * Builder for max attempts retry interceptor.
 	 *
@@ -138,13 +140,12 @@ public abstract class ReactiveRetryInterceptorBuilder<T extends MethodIntercepto
 
 		@Override
 		public MaxAttemptsReactiveRetryInterceptor build() {
-			RetrySpec retrySpec = Retry.max(this.maxAttempts).doBeforeRetry(retrySignal -> {
-				log.error(DEFAULT_BEFORE_RETRYING_ERROR_MESSAGE, retrySignal.totalRetries());
-				log.debug(DEFAULT_BEFORE_RETRYING_DEBUG_MESSAGE, retrySignal.totalRetries(), retrySignal.failure());
-			}).doAfterRetry(retrySignal -> {
-				log.error(DEFAULT_AFTER_RETRYING_ERROR_MESSAGE, retrySignal.totalRetries());
-				log.debug(DEFAULT_AFTER_RETRYING_DEBUG_MESSAGE, retrySignal.totalRetries(), retrySignal.failure());
-			}).filter(this::errorFilter);
+			RetrySpec retrySpec = Retry.max(this.maxAttempts)
+					.doBeforeRetry(retrySignal -> log.error(DEFAULT_BEFORE_RETRYING_ERROR_MESSAGE,
+							retrySignal.totalRetries(), retrySignal.failure()))
+					.doAfterRetry(retrySignal -> log.error(DEFAULT_AFTER_RETRYING_ERROR_MESSAGE,
+							retrySignal.totalRetries(), retrySignal.failure()))
+					.filter(this::errorFilter).onRetryExhaustedThrow(this::unwrapError);
 			return new MaxAttemptsReactiveRetryInterceptor(retrySpec);
 		}
 
@@ -183,15 +184,11 @@ public abstract class ReactiveRetryInterceptorBuilder<T extends MethodIntercepto
 		@Override
 		public FixedDelayReactiveRetryInterceptor build() {
 			RetryBackoffSpec retrySpec = Retry.fixedDelay(this.maxAttempts, Duration.ofMillis(this.fixedDelay))
-					.doBeforeRetry(retrySignal -> {
-						log.error(DEFAULT_BEFORE_RETRYING_ERROR_MESSAGE, retrySignal.totalRetries());
-						log.debug(DEFAULT_BEFORE_RETRYING_DEBUG_MESSAGE, retrySignal.totalRetries(),
-								retrySignal.failure());
-					}).doAfterRetry(retrySignal -> {
-						log.error(DEFAULT_AFTER_RETRYING_ERROR_MESSAGE, retrySignal.totalRetries());
-						log.debug(DEFAULT_AFTER_RETRYING_DEBUG_MESSAGE, retrySignal.totalRetries(),
-								retrySignal.failure());
-					}).filter(this::errorFilter);
+					.doBeforeRetry(retrySignal -> log.error(DEFAULT_BEFORE_RETRYING_ERROR_MESSAGE,
+							retrySignal.totalRetries(), retrySignal.failure()))
+					.doAfterRetry(retrySignal -> log.error(DEFAULT_AFTER_RETRYING_ERROR_MESSAGE,
+							retrySignal.totalRetries(), retrySignal.failure()))
+					.filter(this::errorFilter).onRetryExhaustedThrow(this::unwrapError);
 			return new FixedDelayReactiveRetryInterceptor(retrySpec);
 		}
 
@@ -231,14 +228,12 @@ public abstract class ReactiveRetryInterceptorBuilder<T extends MethodIntercepto
 				ReactiveRetryInterceptorBuilder<MaxInRowReactiveRetryInterceptor> {
 		@Override
 		public MaxInRowReactiveRetryInterceptor build() {
-			RetrySpec retrySpec = Retry.maxInARow(this.maxAttempts).doBeforeRetry(retrySignal -> {
-				log.error(DEFAULT_BEFORE_RETRYING_ERROR_MESSAGE, retrySignal.totalRetries());
-				log.debug(DEFAULT_BEFORE_RETRYING_DEBUG_MESSAGE, retrySignal.totalRetries(), retrySignal.failure());
-			}).doAfterRetry(retrySignal -> {
-				log.error(DEFAULT_AFTER_RETRYING_ERROR_MESSAGE, retrySignal.totalRetries());
-				log.debug(DEFAULT_AFTER_RETRYING_DEBUG_MESSAGE, retrySignal.totalRetries(), retrySignal.failure());
-			});
-			retrySpec = retrySpec.filter(this::errorFilter);
+			RetrySpec retrySpec = Retry.maxInARow(this.maxAttempts)
+					.doBeforeRetry(retrySignal -> log.error(DEFAULT_BEFORE_RETRYING_ERROR_MESSAGE,
+							retrySignal.totalRetries(), retrySignal.failure()))
+					.doAfterRetry(retrySignal -> log.error(DEFAULT_AFTER_RETRYING_ERROR_MESSAGE,
+							retrySignal.totalRetries(), retrySignal.failure()))
+					.filter(this::errorFilter).onRetryExhaustedThrow(this::unwrapError);
 			return new MaxInRowReactiveRetryInterceptor(retrySpec);
 		}
 
@@ -278,15 +273,12 @@ public abstract class ReactiveRetryInterceptorBuilder<T extends MethodIntercepto
 		@Override
 		public BackOffReactiveRetryInterceptor build() {
 			RetryBackoffSpec retryBackoffSpec = Retry.backoff(this.maxAttempts, Duration.ofMillis(100))
-					.filter(this::errorFilter).doBeforeRetry(retrySignal -> {
-						log.error(DEFAULT_BEFORE_RETRYING_ERROR_MESSAGE, retrySignal.totalRetries());
-						log.debug(DEFAULT_BEFORE_RETRYING_DEBUG_MESSAGE, retrySignal.totalRetries(),
-								retrySignal.failure());
-					}).doAfterRetry(retrySignal -> {
-						log.error(DEFAULT_AFTER_RETRYING_ERROR_MESSAGE, retrySignal.totalRetries());
-						log.debug(DEFAULT_AFTER_RETRYING_DEBUG_MESSAGE, retrySignal.totalRetries(),
-								retrySignal.failure());
-					});
+					.filter(this::errorFilter)
+					.doBeforeRetry(retrySignal -> log.error(DEFAULT_BEFORE_RETRYING_ERROR_MESSAGE,
+							retrySignal.totalRetries(), retrySignal.failure()))
+					.doAfterRetry(retrySignal -> log.error(DEFAULT_AFTER_RETRYING_ERROR_MESSAGE,
+							retrySignal.totalRetries(), retrySignal.failure()))
+					.onRetryExhaustedThrow(this::unwrapError);
 			if (this.minDelay > 0)
 				retryBackoffSpec = retryBackoffSpec.minBackoff(Duration.ofMillis(this.minDelay));
 			if (this.maxDelay > 0)

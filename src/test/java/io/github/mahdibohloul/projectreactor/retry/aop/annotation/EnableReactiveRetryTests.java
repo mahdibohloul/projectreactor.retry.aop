@@ -2,10 +2,12 @@ package io.github.mahdibohloul.projectreactor.retry.aop.annotation;
 
 import io.github.mahdibohloul.projectreactor.retry.aop.ApplicationTests;
 import io.github.mahdibohloul.projectreactor.retry.aop.interceptor.ReactiveRetryable;
+import java.util.Objects;
 import org.junit.jupiter.api.Assertions;
 import org.junit.jupiter.api.Test;
 import org.springframework.aop.support.AopUtils;
 import org.springframework.context.annotation.AnnotationConfigApplicationContext;
+import reactor.core.Exceptions;
 import reactor.test.StepVerifier;
 
 class EnableReactiveRetryTests {
@@ -26,7 +28,8 @@ class EnableReactiveRetryTests {
 				ApplicationTests.TestConfiguration.class);
 		ApplicationTests.Service service = context.getBean(ApplicationTests.Service.class);
 		Assertions.assertTrue(AopUtils.isAopProxy(service));
-		StepVerifier.create(service.exhaustedRetry()).expectError(RuntimeException.class).verify();
+		StepVerifier.create(service.exhaustedRetry()).expectErrorMatches(error -> error instanceof RuntimeException
+				&& !Exceptions.isRetryExhausted(error) && Objects.equals(error.getMessage(), "error")).verify();
 		Assertions.assertEquals(2, service.getCount());
 		context.close();
 	}
