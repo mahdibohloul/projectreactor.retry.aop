@@ -34,7 +34,7 @@ jobs:
         run: ./gradlew spotlessCheck
 
       - name: Build and Test
-        run: ./gradlew clean build test
+        run: ./gradlew clean check
 
   publish:
     needs: build
