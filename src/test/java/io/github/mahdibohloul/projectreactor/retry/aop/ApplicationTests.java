@@ -11,188 +11,188 @@ import org.springframework.context.support.PropertySourcesPlaceholderConfigurer;
 import reactor.core.publisher.Mono;
 
 public class ApplicationTests {
-    @Configuration
-    @EnableReactiveRetry(order = 1)
-    public static class TestConfiguration {
-        @Bean
-        public static PropertySourcesPlaceholderConfigurer pspc() {
-            PropertySourcesPlaceholderConfigurer pspc = new PropertySourcesPlaceholderConfigurer();
-            Properties properties = new Properties();
-            properties.setProperty("one", "1");
-            properties.setProperty("five", "5");
-            properties.setProperty("onePointOne", "1.1");
-            properties.setProperty("retryMethod", "shouldRetry");
-            pspc.setProperties(properties);
-            return pspc;
-        }
+	@Configuration
+	@EnableReactiveRetry(order = 1)
+	public static class TestConfiguration {
+		@Bean
+		public static PropertySourcesPlaceholderConfigurer pspc() {
+			PropertySourcesPlaceholderConfigurer pspc = new PropertySourcesPlaceholderConfigurer();
+			Properties properties = new Properties();
+			properties.setProperty("one", "1");
+			properties.setProperty("five", "5");
+			properties.setProperty("onePointOne", "1.1");
+			properties.setProperty("retryMethod", "shouldRetry");
+			pspc.setProperties(properties);
+			return pspc;
+		}
 
-        @Bean
-        public Service service() {
-            return new Service();
-        }
+		@Bean
+		public Service service() {
+			return new Service();
+		}
 
-        @Bean
-        public ExcludesService excludesService() {
-            return new ExcludesService();
-        }
+		@Bean
+		public ExcludesService excludesService() {
+			return new ExcludesService();
+		}
 
-        @Bean
-        public InheritedExcludesService inheritedExcludesService() {
-            return new InheritedExcludesService();
-        }
+		@Bean
+		public InheritedExcludesService inheritedExcludesService() {
+			return new InheritedExcludesService();
+		}
 
-        @Bean
-        public InheritedExcludesBackOffService inheritedExcludesBackOffService() {
-            return new InheritedExcludesBackOffService();
-        }
+		@Bean
+		public InheritedExcludesBackOffService inheritedExcludesBackOffService() {
+			return new InheritedExcludesBackOffService();
+		}
 
-        @Bean
-        public RetryableService retryableService() {
-            return new RetryableService();
-        }
+		@Bean
+		public RetryableService retryableService() {
+			return new RetryableService();
+		}
 
-        @Bean
-        public MethodInterceptor retryInterceptor() {
-            return ReactiveRetryInterceptorBuilder.maxAttempts().setMaxAttempts(5).build();
-        }
+		@Bean
+		public MethodInterceptor retryInterceptor() {
+			return ReactiveRetryInterceptorBuilder.maxAttempts().setMaxAttempts(5).build();
+		}
 
-        @Bean
-        public CustomInterceptorService customInterceptorService() {
-            return new CustomInterceptorService();
-        }
-    }
+		@Bean
+		public CustomInterceptorService customInterceptorService() {
+			return new CustomInterceptorService();
+		}
+	}
 
-    @Configuration
-    public static class WithoutRetryConfiguration {
-        @Bean
-        public Service service() {
-            return new Service();
-        }
-    }
+	@Configuration
+	public static class WithoutRetryConfiguration {
+		@Bean
+		public Service service() {
+			return new Service();
+		}
+	}
 
-    @Configuration
-    @EnableReactiveRetry(proxyTargetClass = true)
-    public static class TestProxyConfiguration {
-        @Bean
-        public Service service() {
-            return new Service();
-        }
-    }
+	@Configuration
+	@EnableReactiveRetry(proxyTargetClass = true)
+	public static class TestProxyConfiguration {
+		@Bean
+		public Service service() {
+			return new Service();
+		}
+	}
 
-    public static class Service {
-        private int count = 0;
+	public static class Service {
+		private int count = 0;
 
-        @ReactiveRetryable
-        public Mono<Void> service() {
-            return Mono.defer(() -> {
-                if (this.count++ < 2)
-                    return Mono.error(new RuntimeException("error"));
-                return Mono.empty();
-            });
-        }
+		@ReactiveRetryable
+		public Mono<Void> service() {
+			return Mono.defer(() -> {
+				if (this.count++ < 2)
+					return Mono.error(new RuntimeException("error"));
+				return Mono.empty();
+			});
+		}
 
-        @ReactiveRetryable(maxAttempts = 1)
-        public Mono<Void> exhaustedRetry() {
-            return Mono.defer(() -> {
-                if (this.count++ < 2)
-                    return Mono.error(new RuntimeException("error"));
-                return Mono.empty();
-            });
-        }
+		@ReactiveRetryable(maxAttempts = 1)
+		public Mono<Void> exhaustedRetry() {
+			return Mono.defer(() -> {
+				if (this.count++ < 2)
+					return Mono.error(new RuntimeException("error"));
+				return Mono.empty();
+			});
+		}
 
-        public int getCount() {
-            return count;
-        }
-    }
+		public int getCount() {
+			return count;
+		}
+	}
 
-    public static class ExcludesService {
-        private int count = 0;
+	public static class ExcludesService {
+		private int count = 0;
 
-        @ReactiveRetryable(exclude = {IllegalStateException.class})
-        public Mono<Void> service() {
-            return Mono.defer(() -> {
-                if (this.count++ < 2)
-                    return Mono.error(new IllegalStateException("error"));
-                return Mono.empty();
-            });
-        }
+		@ReactiveRetryable(exclude = {IllegalStateException.class})
+		public Mono<Void> service() {
+			return Mono.defer(() -> {
+				if (this.count++ < 2)
+					return Mono.error(new IllegalStateException("error"));
+				return Mono.empty();
+			});
+		}
 
-        public int getCount() {
-            return count;
-        }
-    }
+		public int getCount() {
+			return count;
+		}
+	}
 
-    public static class ChildIllegalStateException extends IllegalStateException {
-        public ChildIllegalStateException(String s) {
-            super(s);
-        }
-    }
+	public static class ChildIllegalStateException extends IllegalStateException {
+		public ChildIllegalStateException(String s) {
+			super(s);
+		}
+	}
 
-    public static class InheritedExcludesService {
-        private int count = 0;
+	public static class InheritedExcludesService {
+		private int count = 0;
 
-        @ReactiveRetryable(exclude = {RuntimeException.class})
-        public Mono<Void> service() {
-            return Mono.defer(() -> {
-                if (this.count++ < 2)
-                    return Mono.error(new ChildIllegalStateException("error"));
-                return Mono.empty();
-            });
-        }
+		@ReactiveRetryable(exclude = {RuntimeException.class})
+		public Mono<Void> service() {
+			return Mono.defer(() -> {
+				if (this.count++ < 2)
+					return Mono.error(new ChildIllegalStateException("error"));
+				return Mono.empty();
+			});
+		}
 
-        public int getCount() {
-            return count;
-        }
-    }
+		public int getCount() {
+			return count;
+		}
+	}
 
-    public static class InheritedExcludesBackOffService {
-        private int count = 0;
+	public static class InheritedExcludesBackOffService {
+		private int count = 0;
 
-        @ReactiveRetryable(exclude = {RuntimeException.class}, exponentialBackoff = true)
-        public Mono<Void> service() {
-            return Mono.defer(() -> {
-                if (this.count++ < 2)
-                    return Mono.error(new ChildIllegalStateException("error"));
-                return Mono.empty();
-            });
-        }
+		@ReactiveRetryable(exclude = {RuntimeException.class}, exponentialBackoff = true)
+		public Mono<Void> service() {
+			return Mono.defer(() -> {
+				if (this.count++ < 2)
+					return Mono.error(new ChildIllegalStateException("error"));
+				return Mono.empty();
+			});
+		}
 
-        public int getCount() {
-            return count;
-        }
-    }
+		public int getCount() {
+			return count;
+		}
+	}
 
-    @ReactiveRetryable
-    public static class RetryableService {
-        private int count = 0;
+	@ReactiveRetryable
+	public static class RetryableService {
+		private int count = 0;
 
-        public Mono<Void> service() {
-            return Mono.defer(() -> {
-                if (this.count++ < 2)
-                    return Mono.error(new RuntimeException("error"));
-                return Mono.empty();
-            });
-        }
+		public Mono<Void> service() {
+			return Mono.defer(() -> {
+				if (this.count++ < 2)
+					return Mono.error(new RuntimeException("error"));
+				return Mono.empty();
+			});
+		}
 
-        public int getCount() {
-            return count;
-        }
-    }
+		public int getCount() {
+			return count;
+		}
+	}
 
-    public static class CustomInterceptorService {
-        private int count = 0;
+	public static class CustomInterceptorService {
+		private int count = 0;
 
-        @ReactiveRetryable(interceptor = "retryInterceptor")
-        public Mono<Void> service() {
-            return Mono.defer(() -> {
-                if (this.count++ < 7)
-                    return Mono.error(new RuntimeException("error"));
-                return Mono.empty();
-            });
-        }
+		@ReactiveRetryable(interceptor = "retryInterceptor")
+		public Mono<Void> service() {
+			return Mono.defer(() -> {
+				if (this.count++ < 7)
+					return Mono.error(new RuntimeException("error"));
+				return Mono.empty();
+			});
+		}
 
-        public int getCount() {
-            return count;
-        }
-    }
+		public int getCount() {
+			return count;
+		}
+	}
 }

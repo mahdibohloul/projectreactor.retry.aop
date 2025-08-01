@@ -9,7 +9,7 @@ import reactor.util.retry.RetrySpec;
  * @author Mahdi Bohloul
  */
 public class MaxAttemptsReactiveRetryInterceptor extends ReactiveRetryInterceptor {
-    protected MaxAttemptsReactiveRetryInterceptor(RetrySpec retryPolicy) {
-        super(retryPolicy);
-    }
+	protected MaxAttemptsReactiveRetryInterceptor(RetrySpec retryPolicy) {
+		super(retryPolicy);
+	}
 }

@@ -39,137 +39,137 @@ import org.springframework.util.ReflectionUtils;
 @Role(BeanDefinition.ROLE_INFRASTRUCTURE)
 @Component
 public class ReactiveRetryConfiguration extends AbstractPointcutAdvisor
-        implements
-            IntroductionAdvisor,
-            BeanFactoryAware,
-            InitializingBean,
-            SmartInitializingSingleton,
-            ImportAware {
+		implements
+			IntroductionAdvisor,
+			BeanFactoryAware,
+			InitializingBean,
+			SmartInitializingSingleton,
+			ImportAware {
 
-    private AnnotationAwareReactiveRetryOperationsInterceptor advice;
+	private AnnotationAwareReactiveRetryOperationsInterceptor advice;
 
-    private Pointcut pointcut;
+	private Pointcut pointcut;
 
-    private BeanFactory beanFactory;
+	private BeanFactory beanFactory;
 
-    @Override
-    public ClassFilter getClassFilter() {
-        return this.pointcut.getClassFilter();
-    }
+	@Override
+	public ClassFilter getClassFilter() {
+		return this.pointcut.getClassFilter();
+	}
 
-    @Override
-    public void validateInterfaces() throws IllegalArgumentException {
-    }
+	@Override
+	public void validateInterfaces() throws IllegalArgumentException {
+	}
 
-    @Override
-    public Class<?>[] getInterfaces() {
-        return new Class[]{io.github.mahdibohloul.projectreactor.retry.aop.interceptor.ReactiveRetryable.class};
-    }
+	@Override
+	public Class<?>[] getInterfaces() {
+		return new Class[]{io.github.mahdibohloul.projectreactor.retry.aop.interceptor.ReactiveRetryable.class};
+	}
 
-    @Override
-    public Pointcut getPointcut() {
-        return this.pointcut;
-    }
+	@Override
+	public Pointcut getPointcut() {
+		return this.pointcut;
+	}
 
-    @Override
-    public Advice getAdvice() {
-        return this.advice;
-    }
+	@Override
+	public Advice getAdvice() {
+		return this.advice;
+	}
 
-    @Override
-    public void setBeanFactory(BeanFactory beanFactory) throws BeansException {
-        this.beanFactory = beanFactory;
-    }
+	@Override
+	public void setBeanFactory(BeanFactory beanFactory) throws BeansException {
+		this.beanFactory = beanFactory;
+	}
 
-    @Override
-    public void afterPropertiesSet() {
-        Set<Class<? extends Annotation>> reactiveRetryableAnnotationTypes = new LinkedHashSet<>(1);
-        reactiveRetryableAnnotationTypes.add(ReactiveRetryable.class);
-        this.pointcut = buildPointcut(reactiveRetryableAnnotationTypes);
-        this.advice = buildAdvice();
-        ((BeanFactoryAware) this.advice).setBeanFactory(this.beanFactory);
-    }
+	@Override
+	public void afterPropertiesSet() {
+		Set<Class<? extends Annotation>> reactiveRetryableAnnotationTypes = new LinkedHashSet<>(1);
+		reactiveRetryableAnnotationTypes.add(ReactiveRetryable.class);
+		this.pointcut = buildPointcut(reactiveRetryableAnnotationTypes);
+		this.advice = buildAdvice();
+		((BeanFactoryAware) this.advice).setBeanFactory(this.beanFactory);
+	}
 
-    @Override
-    public void afterSingletonsInstantiated() {
-    }
+	@Override
+	public void afterSingletonsInstantiated() {
+	}
 
-    private AnnotationAwareReactiveRetryOperationsInterceptor buildAdvice() {
-        return new AnnotationAwareReactiveRetryOperationsInterceptor();
-    }
+	private AnnotationAwareReactiveRetryOperationsInterceptor buildAdvice() {
+		return new AnnotationAwareReactiveRetryOperationsInterceptor();
+	}
 
-    private Pointcut buildPointcut(Set<Class<? extends Annotation>> reactiveRetryableAnnotationTypes) {
-        ComposablePointcut res = null;
-        for (Class<? extends Annotation> annotationType : reactiveRetryableAnnotationTypes) {
-            Pointcut filter = new AnnotationClassOrMethodPointcut(annotationType);
-            if (res == null)
-                res = new ComposablePointcut(filter);
-            else
-                res.union(filter);
-        }
-        return res;
-    }
+	private Pointcut buildPointcut(Set<Class<? extends Annotation>> reactiveRetryableAnnotationTypes) {
+		ComposablePointcut res = null;
+		for (Class<? extends Annotation> annotationType : reactiveRetryableAnnotationTypes) {
+			Pointcut filter = new AnnotationClassOrMethodPointcut(annotationType);
+			if (res == null)
+				res = new ComposablePointcut(filter);
+			else
+				res.union(filter);
+		}
+		return res;
+	}
 
-    @Override
-    public void setImportMetadata(AnnotationMetadata importMetadata) {
-        Map<String, Object> annotationAttributes = importMetadata
-                .getAnnotationAttributes(EnableReactiveRetry.class.getName());
-        if (annotationAttributes != null) {
-            int order = annotationAttributes.get("order") instanceof Integer
-                    ? (Integer) annotationAttributes.get("order")
-                    : Ordered.LOWEST_PRECEDENCE;
-            setOrder(order);
-        }
-    }
+	@Override
+	public void setImportMetadata(AnnotationMetadata importMetadata) {
+		Map<String, Object> annotationAttributes = importMetadata
+				.getAnnotationAttributes(EnableReactiveRetry.class.getName());
+		if (annotationAttributes != null) {
+			int order = annotationAttributes.get("order") instanceof Integer
+					? (Integer) annotationAttributes.get("order")
+					: Ordered.LOWEST_PRECEDENCE;
+			setOrder(order);
+		}
+	}
 
-    private static final class AnnotationClassOrMethodPointcut extends StaticMethodMatcherPointcut {
-        private final MethodMatcher methodMatcher;
+	private static final class AnnotationClassOrMethodPointcut extends StaticMethodMatcherPointcut {
+		private final MethodMatcher methodMatcher;
 
-        AnnotationClassOrMethodPointcut(Class<? extends Annotation> annotationType) {
-            this.methodMatcher = new AnnotationMethodMatcher(annotationType);
-            setClassFilter(new AnnotationClassOrMethodFilter(annotationType));
-        }
+		AnnotationClassOrMethodPointcut(Class<? extends Annotation> annotationType) {
+			this.methodMatcher = new AnnotationMethodMatcher(annotationType);
+			setClassFilter(new AnnotationClassOrMethodFilter(annotationType));
+		}
 
-        @Override
-        public boolean matches(Method method, Class<?> targetClass) {
-            return getClassFilter().matches(targetClass) || this.methodMatcher.matches(method, targetClass);
-        }
-    }
+		@Override
+		public boolean matches(Method method, Class<?> targetClass) {
+			return getClassFilter().matches(targetClass) || this.methodMatcher.matches(method, targetClass);
+		}
+	}
 
-    private static final class AnnotationClassOrMethodFilter extends AnnotationClassFilter {
-        private final AnnotationMethodResolver methodResolver;
+	private static final class AnnotationClassOrMethodFilter extends AnnotationClassFilter {
+		private final AnnotationMethodResolver methodResolver;
 
-        AnnotationClassOrMethodFilter(Class<? extends Annotation> annotationType) {
-            super(annotationType, true);
-            this.methodResolver = new AnnotationMethodResolver(annotationType);
-        }
+		AnnotationClassOrMethodFilter(Class<? extends Annotation> annotationType) {
+			super(annotationType, true);
+			this.methodResolver = new AnnotationMethodResolver(annotationType);
+		}
 
-        @Override
-        public boolean matches(Class<?> clazz) {
-            return super.matches(clazz) || this.methodResolver.hasAnnotatedMethods(clazz);
-        }
-    }
+		@Override
+		public boolean matches(Class<?> clazz) {
+			return super.matches(clazz) || this.methodResolver.hasAnnotatedMethods(clazz);
+		}
+	}
 
-    private static class AnnotationMethodResolver {
+	private static class AnnotationMethodResolver {
 
-        private final Class<? extends Annotation> annotationType;
+		private final Class<? extends Annotation> annotationType;
 
-        public AnnotationMethodResolver(Class<? extends Annotation> annotationType) {
-            this.annotationType = annotationType;
-        }
+		public AnnotationMethodResolver(Class<? extends Annotation> annotationType) {
+			this.annotationType = annotationType;
+		}
 
-        public boolean hasAnnotatedMethods(Class<?> clazz) {
-            final AtomicBoolean found = new AtomicBoolean(false);
-            ReflectionUtils.doWithMethods(clazz, method -> {
-                if (found.get()) {
-                    return;
-                }
-                Annotation annotation = AnnotationUtils.findAnnotation(method,
-                        AnnotationMethodResolver.this.annotationType);
-                if (annotation != null)
-                    found.set(true);
-            });
-            return found.get();
-        }
-    }
+		public boolean hasAnnotatedMethods(Class<?> clazz) {
+			final AtomicBoolean found = new AtomicBoolean(false);
+			ReflectionUtils.doWithMethods(clazz, method -> {
+				if (found.get()) {
+					return;
+				}
+				Annotation annotation = AnnotationUtils.findAnnotation(method,
+						AnnotationMethodResolver.this.annotationType);
+				if (annotation != null)
+					found.set(true);
+			});
+			return found.get();
+		}
+	}
 }

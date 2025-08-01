@@ -15,22 +15,22 @@ import org.springframework.aop.ProxyMethodInvocation;
  * @since 1.4.0
  */
 public class ReactiveRetryUtil {
-    private ReactiveRetryUtil() {
-    }
+	private ReactiveRetryUtil() {
+	}
 
-    /**
-     * Clone the given method invocation.
-     *
-     * @param invocation
-     *            the method invocation to be cloned it should be an instance of
-     *            {@link ProxyMethodInvocation}
-     * @return the cloned method invocation
-     * @author Mahdi Bohloul
-     * @since 1.4.0
-     */
-    public static MethodInvocation invocableClone(MethodInvocation invocation) {
-        if (invocation instanceof ProxyMethodInvocation)
-            return ((ProxyMethodInvocation) invocation).invocableClone();
-        return invocation;
-    }
+	/**
+	 * Clone the given method invocation.
+	 *
+	 * @param invocation
+	 *            the method invocation to be cloned it should be an instance of
+	 *            {@link ProxyMethodInvocation}
+	 * @return the cloned method invocation
+	 * @author Mahdi Bohloul
+	 * @since 1.4.0
+	 */
+	public static MethodInvocation invocableClone(MethodInvocation invocation) {
+		if (invocation instanceof ProxyMethodInvocation)
+			return ((ProxyMethodInvocation) invocation).invocableClone();
+		return invocation;
+	}
 }

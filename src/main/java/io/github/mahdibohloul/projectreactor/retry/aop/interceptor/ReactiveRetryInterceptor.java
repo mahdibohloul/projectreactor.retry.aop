@@ -14,54 +14,54 @@ import reactor.util.retry.Retry;
  */
 public abstract class ReactiveRetryInterceptor implements MethodInterceptor {
 
-    private final Retry retryPolicy;
+	private final Retry retryPolicy;
 
-    protected ReactiveRetryInterceptor(Retry retryPolicy) {
-        this.retryPolicy = retryPolicy;
-    }
+	protected ReactiveRetryInterceptor(Retry retryPolicy) {
+		this.retryPolicy = retryPolicy;
+	}
 
-    /**
-     * Retry the given invocation using the configured retry policy. This function
-     * uses project reactor's retry mechanism to provide retry support.
-     *
-     * @param invocation
-     *            the method invocation joinpoint
-     * @return the result of the invocation
-     * @throws Throwable
-     *             if the invocation fails
-     */
-    @Override
-    public Object invoke(MethodInvocation invocation) throws Throwable {
-        if (!isPublisher(invocation.getMethod().getReturnType()))
-            return invocation.proceed();
-        if (isMono(invocation.getMethod().getReturnType()))
-            return Mono.defer(() -> {
-                try {
-                    return (Mono) ReactiveRetryUtil.invocableClone(invocation).proceed();
-                } catch (Throwable t) {
-                    return Mono.error(t);
-                }
-            }).retryWhen(retryPolicy);
-        if (isFlux(invocation.getMethod().getReturnType()))
-            return Flux.defer(() -> {
-                try {
-                    return (Flux) ReactiveRetryUtil.invocableClone(invocation).proceed();
-                } catch (Throwable t) {
-                    return Flux.error(t);
-                }
-            }).retryWhen(this.retryPolicy);
-        return invocation.proceed();
-    }
+	/**
+	 * Retry the given invocation using the configured retry policy. This function
+	 * uses the project reactor's retry mechanism to provide retry support.
+	 *
+	 * @param invocation
+	 *            the method invocation joinpoint
+	 * @return the result of the invocation
+	 * @throws Throwable
+	 *             if the invocation fails
+	 */
+	@Override
+	public Object invoke(MethodInvocation invocation) throws Throwable {
+		if (!isPublisher(invocation.getMethod().getReturnType()))
+			return invocation.proceed();
+		if (isMono(invocation.getMethod().getReturnType()))
+			return Mono.defer(() -> {
+				try {
+					return (Mono) ReactiveRetryUtil.invocableClone(invocation).proceed();
+				} catch (Throwable t) {
+					return Mono.error(t);
+				}
+			}).retryWhen(retryPolicy);
+		if (isFlux(invocation.getMethod().getReturnType()))
+			return Flux.defer(() -> {
+				try {
+					return (Flux) ReactiveRetryUtil.invocableClone(invocation).proceed();
+				} catch (Throwable t) {
+					return Flux.error(t);
+				}
+			}).retryWhen(this.retryPolicy);
+		return invocation.proceed();
+	}
 
-    private boolean isFlux(Class<?> returnType) {
-        return returnType.equals(Flux.class);
-    }
+	private boolean isFlux(Class<?> returnType) {
+		return returnType.equals(Flux.class);
+	}
 
-    private boolean isMono(Class<?> returnType) {
-        return returnType.equals(Mono.class);
-    }
+	private boolean isMono(Class<?> returnType) {
+		return returnType.equals(Mono.class);
+	}
 
-    private boolean isPublisher(Class<?> returnType) {
-        return Publisher.class.isAssignableFrom(returnType);
-    }
+	private boolean isPublisher(Class<?> returnType) {
+		return Publisher.class.isAssignableFrom(returnType);
+	}
 }

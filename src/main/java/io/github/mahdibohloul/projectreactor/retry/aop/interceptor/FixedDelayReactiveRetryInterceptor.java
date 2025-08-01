@@ -9,7 +9,7 @@ import reactor.util.retry.RetryBackoffSpec;
  * @author Mahdi Bohloul
  */
 public class FixedDelayReactiveRetryInterceptor extends ReactiveRetryInterceptor {
-    protected FixedDelayReactiveRetryInterceptor(RetryBackoffSpec retryPolicy) {
-        super(retryPolicy);
-    }
+	protected FixedDelayReactiveRetryInterceptor(RetryBackoffSpec retryPolicy) {
+		super(retryPolicy);
+	}
 }
