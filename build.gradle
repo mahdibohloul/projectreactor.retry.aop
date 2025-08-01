@@ -44,6 +44,7 @@ mavenPublishing {
     signAllPublications()
 
     pom {
+        name.set("projectreactor-retry-aop")
         description.set("ProjectReactor Retry AOP provides convenient retry support for your reactive applications.")
         url.set("https://github.com/mahdibohloul/projectreactor.retry.aop")
         licenses {
