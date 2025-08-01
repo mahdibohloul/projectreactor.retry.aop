@@ -1,97 +1,101 @@
 plugins {
-    id 'org.springframework.boot' version '2.7.1'
-    id 'io.spring.dependency-management' version '1.0.11.RELEASE'
+    id("org.springframework.boot") version "3.5.3"
+    id("io.spring.dependency-management") version "1.1.7"
     id 'java'
-    id "com.diffplug.spotless" version "6.9.0"
-    id 'maven-publish'
+    id "com.diffplug.spotless" version "7.0.3"
+
     id 'signing'
+    id("com.vanniktech.maven.publish") version "0.34.0"
 }
 
 group = 'io.github.mahdibohloul'
 version = '2.0.0-RC1'
-sourceCompatibility = JavaVersion.VERSION_11
-targetCompatibility = JavaVersion.VERSION_11
+
+java {
+    toolchain {
+        languageVersion = JavaLanguageVersion.of(17)
+    }
+}
 
 repositories {
-    maven { url 'https://repo.spring.io/release' }
     mavenCentral()
 }
 
-dependencies {
-    implementation('org.springframework:spring-context:5.3.22') {
-        exclude(group: 'org.springframework.boot', module: 'spring-boot-starter-logging')
+configurations {
+    compileOnly {
+        extendsFrom annotationProcessor
     }
-    implementation('org.springframework:spring-core:5.3.22') {
-        exclude(group: 'org.springframework.boot', module: 'spring-boot-starter-logging')
-    }
-    implementation 'org.springframework.boot:spring-boot-starter-log4j2:2.7.5'
-    implementation 'io.projectreactor:reactor-core:3.4.22'
-    compileOnly 'org.projectlombok:lombok:1.18.24'
-    annotationProcessor 'org.projectlombok:lombok:1.18.24'
-    testImplementation 'org.junit.jupiter:junit-jupiter-api:5.9.0'
-    testImplementation 'org.junit.jupiter:junit-jupiter-engine:5.9.0'
-    testImplementation 'org.assertj:assertj-core:3.23.1'
-    testImplementation 'org.aspectj:aspectjweaver:1.9.9.1'
-    testImplementation 'org.mockito:mockito-core:4.7.0'
-    testImplementation 'io.projectreactor:reactor-test:3.4.22'
 }
 
-tasks.withType(Sign.class) {
+dependencies {
+    implementation 'org.springframework:spring-context'
+    implementation 'org.springframework:spring-core'
+    implementation 'org.springframework.boot:spring-boot-starter-logging'
+
+    implementation 'io.projectreactor:reactor-core'
+
+    testImplementation 'org.aspectj:aspectjweaver'
+    testImplementation 'org.mockito:mockito-core'
+    testImplementation 'io.projectreactor:reactor-test'
+    testImplementation("org.springframework.boot:spring-boot-starter-test")
+}
+
+tasks.withType(Sign.class).configureEach {
     onlyIf {
         !version.toString().endsWith('-SNAPSHOT')
     }
 }
 
-signing {
-    def signingKey = findProperty("signingKey")
-    def signingPassword = findProperty("signingPassword")
-    useInMemoryPgpKeys(signingKey, signingPassword)
-    sign publishing.publications
-}
+//signing {
+//    def signingKey = findProperty("signingKey")
+//    def signingPassword = findProperty("signingPassword")
+//    useInMemoryPgpKeys(signingKey, signingPassword)
+//    sign publishing.publications
+//}
 
-publishing {
-    repositories {
-        maven {
-            name = "ossrh-staging-api"
-            url = uri("https://ossrh-staging-api.central.sonatype.com/service/local/staging/deploy/maven2/")
-            credentials {
-                username = findProperty("ossrhUsername") ?: System.getenv("OSSRH_USERNAME")
-                password = findProperty("ossrhPassword") ?: System.getenv("OSSRH_PASSWORD")
-            }
-        }
-    }
-
-    publications {
-        maven(MavenPublication) {
-            groupId = project.group.toString()
-            artifactId = project.name.toString()
-            version = project.version.toString()
-            pom {
-                description.set("ProjectReactor Retry AOP provides convenient retry support for your reactive applications.")
-                name.set(artifactId)
-                url.set("https://github.com/mahdibohloul/projectreactor.retry.aop")
-                licenses {
-                    license {
-                        name.set("MIT License")
-                        url.set("https://opensource.org/licenses/MIT")
-                        distribution.set("repo")
-                    }
-                }
-                developers {
-                    developer {
-                        id.set("mahdibohloul")
-                        name.set("Mahdi Bohloul")
-                        email.set("mahdiibohloul@gmail.com")
-                    }
-                }
-                scm {
-                    url.set("https://github.com/mahdibohloul/projectreactor.retry.aop")
-                }
-            }
-            from(components["java"])
-        }
-    }
-}
+//publishing {
+//    repositories {
+//        maven {
+//            name = "CentralSonarType"
+//            url = uri("https://ossrh-staging-api.central.sonatype.com/service/local/staging/deploy/maven2/")
+//            credentials {
+//                username = findProperty("ossrhUsername") ?: System.getenv("OSSRH_USERNAME")
+//                password = findProperty("ossrhPassword") ?: System.getenv("OSSRH_PASSWORD")
+//            }
+//        }
+//    }
+//
+//    publications {
+//        maven(MavenPublication) {
+//            groupId = project.group.toString()
+//            artifactId = project.name.toString()
+//            version = project.version.toString()
+//            pom {
+//                description.set("ProjectReactor Retry AOP provides convenient retry support for your reactive applications.")
+//                name.set(artifactId)
+//                url.set("https://github.com/mahdibohloul/projectreactor.retry.aop")
+//                licenses {
+//                    license {
+//                        name.set("MIT License")
+//                        url.set("https://opensource.org/licenses/MIT")
+//                        distribution.set("repo")
+//                    }
+//                }
+//                developers {
+//                    developer {
+//                        id.set("mahdibohloul")
+//                        name.set("Mahdi Bohloul")
+//                        email.set("mahdiibohloul@gmail.com")
+//                    }
+//                }
+//                scm {
+//                    url.set("https://github.com/mahdibohloul/projectreactor.retry.aop")
+//                }
+//            }
+//            from(components["java"])
+//        }
+//    }
+//}
 
 bootJar {
     enabled = false
@@ -121,7 +125,7 @@ spotless {
         removeUnusedImports()
         eclipse()
         trimTrailingWhitespace()
-        indentWithSpaces(4)
+        leadingSpacesToTabs(4)
         endWithNewline()
     }
 }
