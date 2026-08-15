@@ -43,6 +43,22 @@ dependencies {
     testRuntimeOnly 'org.junit.platform:junit-platform-launcher'
 }
 
+// Publish the concrete versions resolved from the BOM into the POM and the
+// Gradle Module Metadata, instead of leaving BOM-managed dependencies without
+// a version (which fails publication validation).
+publishing {
+    publications.withType(MavenPublication).configureEach {
+        versionMapping {
+            usage('java-api') {
+                fromResolutionOf('runtimeClasspath')
+            }
+            usage('java-runtime') {
+                fromResolutionResult()
+            }
+        }
+    }
+}
+
 mavenPublishing {
     publishToMavenCentral()
     signAllPublications()
