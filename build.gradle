@@ -1,7 +1,7 @@
 plugins {
     id 'java-library'
     id 'io.spring.dependency-management' version '1.1.7'
-    id 'com.diffplug.spotless' version '7.0.3'
+    id 'com.diffplug.spotless' version '8.9.0'
     id 'com.vanniktech.maven.publish' version '0.34.0'
 }
 
