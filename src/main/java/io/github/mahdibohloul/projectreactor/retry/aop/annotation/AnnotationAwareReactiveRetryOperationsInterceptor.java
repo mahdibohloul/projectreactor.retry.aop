@@ -105,8 +105,8 @@ public class AnnotationAwareReactiveRetryOperationsInterceptor implements Introd
 	private MethodInterceptor getBackOffInterceptor(Object target, Method method, ReactiveRetryable reactiveRetryable) {
 		return ReactiveRetryInterceptorBuilder.backOff().setBackOffFactor(reactiveRetryable.backOffFactor())
 				.setMaxDelay(reactiveRetryable.backOffMaxDelay()).setMinDelay(reactiveRetryable.backOffMinDelay())
-				.setExclude(reactiveRetryable.exclude()).setInclude(reactiveRetryable.include())
-				.setMaxAttempts(reactiveRetryable.maxAttempts()).build();
+				.setShouldCheckMaxInRow(reactiveRetryable.shouldCheckMaxInRow()).setExclude(reactiveRetryable.exclude())
+				.setInclude(reactiveRetryable.include()).setMaxAttempts(reactiveRetryable.maxAttempts()).build();
 	}
 
 	private <A extends Annotation> A findAnnotationOnTarget(Object target, Method method, Class<A> annotation) {

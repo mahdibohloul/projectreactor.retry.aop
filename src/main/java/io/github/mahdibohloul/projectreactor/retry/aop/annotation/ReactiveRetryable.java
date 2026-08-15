@@ -77,7 +77,21 @@ public @interface ReactiveRetryable {
 	boolean exponentialBackoff() default false;
 
 	/**
-	 * Whether the maximum number of attempts in a row should be checked.
+	 * Whether {@link #maxAttempts()} counts <em>consecutive</em> failures rather
+	 * than failures over the lifetime of the subscription.
+	 *
+	 * <p>
+	 * Composes with {@link #exponentialBackoff()}: setting both gives "at most
+	 * {@code maxAttempts} failures in a row, with exponential backoff between
+	 * them".
+	 *
+	 * <p>
+	 * <strong>Note</strong> that the attempt counter is reset by <em>emitted
+	 * elements</em>. A method returning a source that never emits -- a
+	 * {@code Mono<Void>}, or a long-lived loop that only signals completion or
+	 * error -- has nothing to reset on, so {@code maxAttempts} stays an effective
+	 * lifetime budget for it regardless of this flag. Such methods want an
+	 * unbounded {@code maxAttempts} instead.
 	 *
 	 * @return Whether the maximum number of attempts in a row should be checked.
 	 */
