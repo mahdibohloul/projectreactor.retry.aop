@@ -269,11 +269,12 @@ public abstract class ReactiveRetryInterceptorBuilder<T extends MethodIntercepto
 		private long minDelay = -1;
 		private long maxDelay = -1;
 		private double backOffFactor = -1.0;
+		private boolean shouldCheckMaxInRow = false;
 
 		@Override
 		public BackOffReactiveRetryInterceptor build() {
 			RetryBackoffSpec retryBackoffSpec = Retry.backoff(this.maxAttempts, Duration.ofMillis(100))
-					.filter(this::errorFilter)
+					.transientErrors(this.shouldCheckMaxInRow).filter(this::errorFilter)
 					.doBeforeRetry(retrySignal -> log.error(DEFAULT_BEFORE_RETRYING_ERROR_MESSAGE,
 							retrySignal.totalRetries(), retrySignal.failure()))
 					.doAfterRetry(retrySignal -> log.error(DEFAULT_AFTER_RETRYING_ERROR_MESSAGE,
@@ -301,6 +302,34 @@ public abstract class ReactiveRetryInterceptorBuilder<T extends MethodIntercepto
 
 		public BackOffRetryInterceptorBuilder setBackOffFactor(double backOffFactor) {
 			this.backOffFactor = backOffFactor;
+			return this;
+		}
+
+		/**
+		 * Makes {@code maxAttempts} count <em>consecutive</em> failures rather than
+		 * failures over the lifetime of the subscription, while keeping the exponential
+		 * backoff.
+		 *
+		 * <p>
+		 * This is what {@link Retry#maxInARow(long)} provides for a plain
+		 * {@link RetrySpec}, and {@link RetryBackoffSpec#transientErrors(boolean)} is
+		 * its equivalent here: the retry counter is reset every time the source emits
+		 * an element, so a source that recovers starts again from a full budget.
+		 *
+		 * <p>
+		 * <strong>Note</strong> that the reset is driven by <em>emitted elements</em>.
+		 * A source that never emits -- a {@code Mono<Void>}, or a long-lived loop that
+		 * only signals completion or error -- has nothing to reset on, so
+		 * {@code maxAttempts} remains an effective lifetime budget for it no matter
+		 * what this flag is set to. Such call sites want an unbounded
+		 * {@code maxAttempts}, not this flag.
+		 *
+		 * @param shouldCheckMaxInRow
+		 *            whether {@code maxAttempts} counts consecutive failures.
+		 * @return the builder
+		 */
+		public BackOffRetryInterceptorBuilder setShouldCheckMaxInRow(boolean shouldCheckMaxInRow) {
+			this.shouldCheckMaxInRow = shouldCheckMaxInRow;
 			return this;
 		}
 

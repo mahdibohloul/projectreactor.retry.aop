@@ -8,6 +8,7 @@ import org.aopalliance.intercept.MethodInterceptor;
 import org.springframework.context.annotation.Bean;
 import org.springframework.context.annotation.Configuration;
 import org.springframework.context.support.PropertySourcesPlaceholderConfigurer;
+import reactor.core.publisher.Flux;
 import reactor.core.publisher.Mono;
 
 public class ApplicationTests {
@@ -59,6 +60,11 @@ public class ApplicationTests {
 		@Bean
 		public CustomInterceptorService customInterceptorService() {
 			return new CustomInterceptorService();
+		}
+
+		@Bean
+		public TransientErrorsBackOffService transientErrorsBackOffService() {
+			return new TransientErrorsBackOffService();
 		}
 	}
 
@@ -176,6 +182,45 @@ public class ApplicationTests {
 
 		public int getCount() {
 			return count;
+		}
+	}
+
+	/**
+	 * Exercises {@code exponentialBackoff} and {@code shouldCheckMaxInRow}
+	 * together. Both methods carry the same budget of two consecutive failures;
+	 * they differ only in whether the source emits anything, which is what resets
+	 * the counter.
+	 */
+	public static class TransientErrorsBackOffService {
+		private int subscriptions = 0;
+
+		/**
+		 * Emits an element before each failure, so the attempt counter is reset every
+		 * time and three failures are survived on a budget of two consecutive ones.
+		 */
+		@ReactiveRetryable(exponentialBackoff = true, maxAttempts = 2, shouldCheckMaxInRow = true, backOffMinDelay = 1)
+		public Flux<String> emitThenFail() {
+			return Flux.defer(() -> {
+				if (++this.subscriptions <= 3)
+					return Flux.just("value").concatWith(Flux.error(new RuntimeException("error")));
+				return Flux.just("value");
+			});
+		}
+
+		/**
+		 * Never emits, so nothing resets the counter and the same budget behaves as a
+		 * lifetime one.
+		 */
+		@ReactiveRetryable(exponentialBackoff = true, maxAttempts = 2, shouldCheckMaxInRow = true, backOffMinDelay = 1)
+		public Flux<String> failWithoutEmitting() {
+			return Flux.defer(() -> {
+				this.subscriptions++;
+				return Flux.error(new RuntimeException("error"));
+			});
+		}
+
+		public int getSubscriptions() {
+			return subscriptions;
 		}
 	}
 

@@ -35,6 +35,32 @@ class EnableReactiveRetryTests {
 	}
 
 	@Test
+	void backOffComposesWithMaxInRow() {
+		AnnotationConfigApplicationContext context = new AnnotationConfigApplicationContext(
+				ApplicationTests.TestConfiguration.class);
+		ApplicationTests.TransientErrorsBackOffService service = context
+				.getBean(ApplicationTests.TransientErrorsBackOffService.class);
+		// Three failures on a budget of two, survived because each is preceded by an
+		// emission that resets the in-a-row counter.
+		StepVerifier.create(service.emitThenFail()).expectNext("value", "value", "value", "value").verifyComplete();
+		Assertions.assertEquals(4, service.getSubscriptions());
+		context.close();
+	}
+
+	@Test
+	void backOffWithMaxInRowStillExhaustsWithoutEmissions() {
+		AnnotationConfigApplicationContext context = new AnnotationConfigApplicationContext(
+				ApplicationTests.TestConfiguration.class);
+		ApplicationTests.TransientErrorsBackOffService service = context
+				.getBean(ApplicationTests.TransientErrorsBackOffService.class);
+		// Nothing ever resets the counter, so the budget is spent over the lifetime of
+		// the subscription: the initial attempt plus two retries.
+		StepVerifier.create(service.failWithoutEmitting()).expectError(RuntimeException.class).verify();
+		Assertions.assertEquals(3, service.getSubscriptions());
+		context.close();
+	}
+
+	@Test
 	void withoutRetryApplication() {
 		AnnotationConfigApplicationContext context = new AnnotationConfigApplicationContext(
 				ApplicationTests.WithoutRetryConfiguration.class);
