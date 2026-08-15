@@ -18,12 +18,12 @@ to your project:
 <dependency>
     <groupId>io.github.mahdibohloul</groupId>
     <artifactId>projectreactor-retry-aop</artifactId>
-    <version>2.0.0-RC2</version>
+    <version>2.0.0</version>
 </dependency>
 ```
 
 ```groovy
-implementation 'io.github.mahdibohloul:projectreactor-retry-aop:2.0.0-RC2'
+implementation 'io.github.mahdibohloul:projectreactor-retry-aop:2.0.0'
 ```
 
 > **Requirements:** Java 21+ and Spring Framework 6.2 / Project Reactor 3.7 on the consumer's classpath.
