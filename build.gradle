@@ -1,10 +1,8 @@
 plugins {
-    id("org.springframework.boot") version "3.5.3"
-    id("io.spring.dependency-management") version "1.1.7"
-    id 'java'
-    id "com.diffplug.spotless" version "7.0.3"
-
-    id("com.vanniktech.maven.publish") version "0.34.0"
+    id 'java-library'
+    id 'io.spring.dependency-management' version '1.1.7'
+    id 'com.diffplug.spotless' version '7.0.3'
+    id 'com.vanniktech.maven.publish' version '0.34.0'
 }
 
 group = 'io.github.mahdibohloul'
@@ -20,23 +18,29 @@ repositories {
     mavenCentral()
 }
 
-configurations {
-    compileOnly {
-        extendsFrom annotationProcessor
+dependencyManagement {
+    imports {
+        mavenBom "org.springframework.boot:spring-boot-dependencies:3.5.3"
     }
 }
 
 dependencies {
-    implementation 'org.springframework:spring-context:6.2.8'
-    implementation 'org.springframework:spring-core:6.2.8'
-    implementation 'org.springframework.boot:spring-boot-starter-logging:3.5.3'
+    // Exposed on the consumer's compile classpath (public API surface).
+    api 'org.springframework:spring-context'
+    api 'org.springframework:spring-core'
+    api 'io.projectreactor:reactor-core'
 
-    implementation 'io.projectreactor:reactor-core:3.7.7'
+    // Internal only.
+    implementation 'org.slf4j:slf4j-api'
 
     testImplementation 'org.aspectj:aspectjweaver'
     testImplementation 'org.mockito:mockito-core'
     testImplementation 'io.projectreactor:reactor-test'
-    testImplementation("org.springframework.boot:spring-boot-starter-test")
+    testImplementation 'org.springframework.boot:spring-boot-starter-test'
+
+    // Align the JUnit Platform launcher with the BOM-managed engine (required
+    // without the Spring Boot plugin, which otherwise pins the launcher).
+    testRuntimeOnly 'org.junit.platform:junit-platform-launcher'
 }
 
 mavenPublishing {
@@ -47,6 +51,7 @@ mavenPublishing {
         name.set("projectreactor-retry-aop")
         description.set("ProjectReactor Retry AOP provides convenient retry support for your reactive applications.")
         url.set("https://github.com/mahdibohloul/projectreactor.retry.aop")
+        inceptionYear.set("2022")
         licenses {
             license {
                 name.set("MIT License")
@@ -64,12 +69,24 @@ mavenPublishing {
         }
         scm {
             url.set("https://github.com/mahdibohloul/projectreactor.retry.aop")
+            connection.set("scm:git:https://github.com/mahdibohloul/projectreactor.retry.aop.git")
+            developerConnection.set("scm:git:ssh://git@github.com/mahdibohloul/projectreactor.retry.aop.git")
+        }
+        issueManagement {
+            system.set("GitHub")
+            url.set("https://github.com/mahdibohloul/projectreactor.retry.aop/issues")
         }
     }
 }
 
 tasks.named('test') {
     useJUnitPlatform()
+}
+
+// Reproducible build artifacts.
+tasks.withType(AbstractArchiveTask).configureEach {
+    preserveFileTimestamps = false
+    reproducibleFileOrder = true
 }
 
 spotless {
