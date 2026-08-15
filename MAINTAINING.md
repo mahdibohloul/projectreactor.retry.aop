@@ -5,7 +5,7 @@ This document is for project maintainers and details the processes and tools use
 ## Development Environment Setup
 
 1. **Required Tools**
-   - JDK 11
+   - JDK 21
    - Gradle
    - Git
    - GPG for signing releases

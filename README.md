@@ -11,22 +11,22 @@ This section provides a quick introduction to getting started with ProjectReacto
 ### Add Dependencies
 
 You can add the
-following [maven dependencies](https://search.maven.org/artifact/io.github.mahdibohloul/projectreactor-retry-aop/1.0.0/pom)
+following [maven dependency](https://central.sonatype.com/artifact/io.github.mahdibohloul/projectreactor-retry-aop)
 to your project:
 
 ```xml
-
 <dependency>
     <groupId>io.github.mahdibohloul</groupId>
     <artifactId>projectreactor-retry-aop</artifactId>
-    <version>1.4.0</version>
-    <type>pom</type>
+    <version>2.0.0-RC2</version>
 </dependency>
 ```
 
 ```groovy
-implementation 'io.github.mahdibohloul:projectreactor-retry-aop:1.4.0'
+implementation 'io.github.mahdibohloul:projectreactor-retry-aop:2.0.0-RC2'
 ```
+
+> **Requirements:** Java 21+ and Spring Framework 6.2 / Project Reactor 3.7 on the consumer's classpath.
 
 ### Declarative Example
 
@@ -80,19 +80,6 @@ If you have any questions or comments, please open an issue or open a pull reque
 ***If you can improve this project, do not hesitate to contribute with me. I'm waiting for your merge requests with open
 arms.***
 
-## ChangeLog
+## Changelog
 
-##### 1.1.0: Change java version from 17 to 11 for source compatibility
-
-##### 1.2.0: Add order field to the `EnableReactiveRetry` annotation
-
-##### 1.2.1: Fix missing sources in maven publications
-
-##### 1.3.0: Fix retry backoff strategy exception filter
-
-##### 1.4.0: 
-- Add log for before retry and after retry.
-  - *If you want to check the throwable message in the log, you should access it via debug level.*
-- Fix bug in method join point processing on retry interceptor.
-    - detail of the bug:
-      - If you have another annotation on your method such as the `transactional` annotation, the retry interceptor doesn't go to call these annotation in the retrying process.
+See [CHANGELOG.md](CHANGELOG.md) for the full, versioned history of changes.
