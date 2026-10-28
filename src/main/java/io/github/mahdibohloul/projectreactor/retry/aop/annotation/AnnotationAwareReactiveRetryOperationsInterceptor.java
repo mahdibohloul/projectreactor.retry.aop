@@ -1,5 +1,6 @@
 package io.github.mahdibohloul.projectreactor.retry.aop.annotation;
 
+import io.github.mahdibohloul.projectreactor.retry.aop.interceptor.ReactiveRecoverer;
 import io.github.mahdibohloul.projectreactor.retry.aop.interceptor.ReactiveRetryInterceptorBuilder;
 import java.lang.annotation.Annotation;
 import java.lang.reflect.Method;
@@ -9,6 +10,8 @@ import org.aopalliance.intercept.MethodInterceptor;
 import org.aopalliance.intercept.MethodInvocation;
 import org.jspecify.annotations.Nullable;
 import org.springframework.aop.IntroductionInterceptor;
+import org.springframework.aop.framework.AopProxyUtils;
+import org.springframework.aop.support.AopUtils;
 import org.springframework.beans.BeansException;
 import org.springframework.beans.factory.BeanFactory;
 import org.springframework.beans.factory.BeanFactoryAware;
@@ -66,15 +69,24 @@ public class AnnotationAwareReactiveRetryOperationsInterceptor implements Introd
 				reactiveRetryable = findAnnotationOnTarget(target, method, ReactiveRetryable.class);
 			if (reactiveRetryable != null) {
 				if (StringUtils.hasText(reactiveRetryable.interceptor())) {
+					if (StringUtils.hasText(reactiveRetryable.recover()))
+						throw new IllegalStateException("@ReactiveRetryable on " + method
+								+ " sets both interceptor = \"" + reactiveRetryable.interceptor()
+								+ "\" and recover = \"" + reactiveRetryable.recover()
+								+ "\". The interceptor attribute is mutually exclusive"
+								+ " with the other attributes.");
 					interceptor = this.beanFactory.getBean(reactiveRetryable.interceptor(), MethodInterceptor.class);
-				} else if (reactiveRetryable.exponentialBackoff()) {
-					interceptor = getBackOffInterceptor(target, method, reactiveRetryable);
-				} else if (reactiveRetryable.shouldCheckMaxInRow()) {
-					interceptor = getMaxInRowInterceptor(target, method, reactiveRetryable);
-				} else if (reactiveRetryable.backOffFixDelay() > 0) {
-					interceptor = getFixedDelayInterceptor(target, method, reactiveRetryable);
 				} else {
-					interceptor = getMaxAttemptsInterceptor(target, method, reactiveRetryable);
+					ReactiveRecoverer recoverer = getRecoverer(target, method, reactiveRetryable);
+					if (reactiveRetryable.exponentialBackoff()) {
+						interceptor = getBackOffInterceptor(reactiveRetryable, recoverer);
+					} else if (reactiveRetryable.shouldCheckMaxInRow()) {
+						interceptor = getMaxInRowInterceptor(reactiveRetryable, recoverer);
+					} else if (reactiveRetryable.backOffFixDelay() > 0) {
+						interceptor = getFixedDelayInterceptor(reactiveRetryable, recoverer);
+					} else {
+						interceptor = getMaxAttemptsInterceptor(reactiveRetryable, recoverer);
+					}
 				}
 			}
 			cachedMethods.putIfAbsent(method, interceptor);
@@ -84,30 +96,43 @@ public class AnnotationAwareReactiveRetryOperationsInterceptor implements Introd
 		return delegate == NULL_INTERCEPTOR ? null : delegate;
 	}
 
-	private MethodInterceptor getMaxAttemptsInterceptor(Object target, Method method,
+	private @Nullable ReactiveRecoverer getRecoverer(@Nullable Object target, Method method,
 			ReactiveRetryable reactiveRetryable) {
-		return ReactiveRetryInterceptorBuilder.maxAttempts().setMaxAttempts(reactiveRetryable.maxAttempts())
-				.setInclude(reactiveRetryable.include()).setExclude(reactiveRetryable.exclude()).build();
+		if (target == null)
+			return null;
+		Class<?> targetClass = AopProxyUtils.ultimateTargetClass(target);
+		return RecoverMethodRecoverer.forMethod(targetClass, AopUtils.getMostSpecificMethod(method, targetClass),
+				reactiveRetryable.recover());
 	}
 
-	private MethodInterceptor getFixedDelayInterceptor(Object target, Method method,
-			ReactiveRetryable reactiveRetryable) {
+	private MethodInterceptor getMaxAttemptsInterceptor(ReactiveRetryable reactiveRetryable,
+			@Nullable ReactiveRecoverer recoverer) {
+		return ReactiveRetryInterceptorBuilder.maxAttempts().setMaxAttempts(reactiveRetryable.maxAttempts())
+				.setInclude(reactiveRetryable.include()).setExclude(reactiveRetryable.exclude()).setRecoverer(recoverer)
+				.build();
+	}
+
+	private MethodInterceptor getFixedDelayInterceptor(ReactiveRetryable reactiveRetryable,
+			@Nullable ReactiveRecoverer recoverer) {
 		return ReactiveRetryInterceptorBuilder.fixedDelay().setFixedDelay(reactiveRetryable.backOffFixDelay())
 				.setMaxAttempts(reactiveRetryable.maxAttempts()).setInclude(reactiveRetryable.include())
-				.setExclude(reactiveRetryable.exclude()).build();
+				.setExclude(reactiveRetryable.exclude()).setRecoverer(recoverer).build();
 	}
 
-	private MethodInterceptor getMaxInRowInterceptor(Object target, Method method,
-			ReactiveRetryable reactiveRetryable) {
+	private MethodInterceptor getMaxInRowInterceptor(ReactiveRetryable reactiveRetryable,
+			@Nullable ReactiveRecoverer recoverer) {
 		return ReactiveRetryInterceptorBuilder.maxInRow().setMaxAttempts(reactiveRetryable.maxAttempts())
-				.setInclude(reactiveRetryable.include()).setExclude(reactiveRetryable.exclude()).build();
+				.setInclude(reactiveRetryable.include()).setExclude(reactiveRetryable.exclude()).setRecoverer(recoverer)
+				.build();
 	}
 
-	private MethodInterceptor getBackOffInterceptor(Object target, Method method, ReactiveRetryable reactiveRetryable) {
+	private MethodInterceptor getBackOffInterceptor(ReactiveRetryable reactiveRetryable,
+			@Nullable ReactiveRecoverer recoverer) {
 		return ReactiveRetryInterceptorBuilder.backOff().setBackOffFactor(reactiveRetryable.backOffFactor())
 				.setMaxDelay(reactiveRetryable.backOffMaxDelay()).setMinDelay(reactiveRetryable.backOffMinDelay())
 				.setShouldCheckMaxInRow(reactiveRetryable.shouldCheckMaxInRow()).setExclude(reactiveRetryable.exclude())
-				.setInclude(reactiveRetryable.include()).setMaxAttempts(reactiveRetryable.maxAttempts()).build();
+				.setInclude(reactiveRetryable.include()).setMaxAttempts(reactiveRetryable.maxAttempts())
+				.setRecoverer(recoverer).build();
 	}
 
 	private <A extends Annotation> @Nullable A findAnnotationOnTarget(@Nullable Object target, Method method,

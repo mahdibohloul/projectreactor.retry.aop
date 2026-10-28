@@ -5,6 +5,7 @@ import java.util.Collections;
 import java.util.IdentityHashMap;
 import java.util.Set;
 import org.aopalliance.intercept.MethodInterceptor;
+import org.jspecify.annotations.Nullable;
 import org.slf4j.Logger;
 import org.slf4j.LoggerFactory;
 import org.springframework.util.Assert;
@@ -24,6 +25,11 @@ public abstract class ReactiveRetryInterceptorBuilder<T extends MethodIntercepto
 	protected long maxAttempts = 3;
 	protected Class<? extends Throwable>[] retryOn = new Class[]{};
 	protected Class<? extends Throwable>[] excludeFromRetryOn = new Class[]{};
+	/**
+	 * The recoverer that is called when the retries fail, or {@code null} for no
+	 * recovery.
+	 */
+	protected @Nullable ReactiveRecoverer recoverer;
 	protected static final String DEFAULT_BEFORE_RETRYING_ERROR_MESSAGE = "Retrying method call, attempt: {}";
 	protected static final String DEFAULT_AFTER_RETRYING_ERROR_MESSAGE = "Retried method call, attempt: {}";
 
@@ -69,6 +75,37 @@ public abstract class ReactiveRetryInterceptorBuilder<T extends MethodIntercepto
 		Assert.notNull(excludeFromRetryOn, "excludeFromRetryOn cannot be null");
 		this.excludeFromRetryOn = excludeFromRetryOn;
 		return this;
+	}
+
+	/**
+	 * Sets the recoverer that is called when the retries fail. The recoverer is
+	 * also called when the error is not retried, for example because of
+	 * {@link #setExclude(Class[])}. The default is no recoverer: the caller gets
+	 * the last error.
+	 *
+	 * @param recoverer
+	 *            the recoverer, or {@code null} for no recovery
+	 * @return the builder
+	 * @since 3.0.0
+	 */
+	public ReactiveRetryInterceptorBuilder<T> setRecoverer(@Nullable ReactiveRecoverer recoverer) {
+		this.recoverer = recoverer;
+		return this;
+	}
+
+	/**
+	 * Gives the configured recoverer to the given interceptor.
+	 *
+	 * @param interceptor
+	 *            the interceptor that the builder made
+	 * @param <I>
+	 *            the type of the interceptor
+	 * @return the given interceptor
+	 * @since 3.0.0
+	 */
+	protected <I extends ReactiveRetryInterceptor> I withRecoverer(I interceptor) {
+		interceptor.setRecoverer(this.recoverer);
+		return interceptor;
 	}
 
 	/**
@@ -166,7 +203,7 @@ public abstract class ReactiveRetryInterceptorBuilder<T extends MethodIntercepto
 					.doAfterRetry(retrySignal -> log.error(DEFAULT_AFTER_RETRYING_ERROR_MESSAGE,
 							retrySignal.totalRetries(), retrySignal.failure()))
 					.filter(this::errorFilter).onRetryExhaustedThrow(this::unwrapError);
-			return new MaxAttemptsReactiveRetryInterceptor(retrySpec);
+			return withRecoverer(new MaxAttemptsReactiveRetryInterceptor(retrySpec));
 		}
 
 		@Override
@@ -209,7 +246,7 @@ public abstract class ReactiveRetryInterceptorBuilder<T extends MethodIntercepto
 					.doAfterRetry(retrySignal -> log.error(DEFAULT_AFTER_RETRYING_ERROR_MESSAGE,
 							retrySignal.totalRetries(), retrySignal.failure()))
 					.filter(this::errorFilter).onRetryExhaustedThrow(this::unwrapError);
-			return new FixedDelayReactiveRetryInterceptor(retrySpec);
+			return withRecoverer(new FixedDelayReactiveRetryInterceptor(retrySpec));
 		}
 
 		@Override
@@ -254,7 +291,7 @@ public abstract class ReactiveRetryInterceptorBuilder<T extends MethodIntercepto
 					.doAfterRetry(retrySignal -> log.error(DEFAULT_AFTER_RETRYING_ERROR_MESSAGE,
 							retrySignal.totalRetries(), retrySignal.failure()))
 					.filter(this::errorFilter).onRetryExhaustedThrow(this::unwrapError);
-			return new MaxInRowReactiveRetryInterceptor(retrySpec);
+			return withRecoverer(new MaxInRowReactiveRetryInterceptor(retrySpec));
 		}
 
 		@Override
@@ -307,7 +344,7 @@ public abstract class ReactiveRetryInterceptorBuilder<T extends MethodIntercepto
 			if (this.backOffFactor > 0)
 				retryBackoffSpec = retryBackoffSpec.jitter(this.backOffFactor);
 
-			return new BackOffReactiveRetryInterceptor(retryBackoffSpec);
+			return withRecoverer(new BackOffReactiveRetryInterceptor(retryBackoffSpec));
 		}
 
 		public BackOffRetryInterceptorBuilder setMinDelay(long minDelay) {
