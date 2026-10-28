@@ -38,6 +38,11 @@ dependencies {
     // Internal only.
     implementation 'org.slf4j:slf4j-api'
 
+    // Only to call suspend recover functions. Spring loads these classes only
+    // when the application uses Kotlin coroutines.
+    compileOnly 'org.jetbrains.kotlin:kotlin-stdlib'
+    compileOnly 'org.jetbrains.kotlinx:kotlinx-coroutines-core'
+
     testImplementation 'org.aspectj:aspectjweaver'
     testImplementation 'org.mockito:mockito-core'
     testImplementation 'io.projectreactor:reactor-test'

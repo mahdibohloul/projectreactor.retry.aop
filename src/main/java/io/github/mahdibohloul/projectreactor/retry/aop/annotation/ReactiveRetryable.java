@@ -138,7 +138,30 @@ public @interface ReactiveRetryable {
 	 * Retry interceptor bean name to be applied for retryable method. Is mutually
 	 * exclusive with other attributes.
 	 *
+	 * <p>
+	 * Recovery does not apply to a custom interceptor bean. If you set this
+	 * attribute and {@link #recover()}, the first call fails with an
+	 * {@link IllegalStateException}.
+	 *
 	 * @return the retry interceptor bean name
 	 */
 	String interceptor() default "";
+
+	/**
+	 * The name of the {@link ReactiveRecover} method to call when the retries fail.
+	 *
+	 * <p>
+	 * The method must be in the same bean and must have the {@link ReactiveRecover}
+	 * annotation. Its signature must fit the retryable method. See
+	 * {@link ReactiveRecover} for the signature rules.
+	 *
+	 * <p>
+	 * If this attribute is empty, the library finds the recover method by its
+	 * signature. If this attribute names a method that does not exist or does not
+	 * fit, the first call fails with an {@link IllegalStateException}.
+	 *
+	 * @return the name of the recover method
+	 * @since 3.0.0
+	 */
+	String recover() default "";
 }

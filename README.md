@@ -95,6 +95,80 @@ limiting the number of retries, and specifying a backoff strategy.
 
 ## Features
 
+### Recovery
+
+Use `@ReactiveRecover` to give a fallback result when the retries fail. The recover method is
+another method of the same bean. The library calls it in these conditions:
+
+- The last retry fails.
+- The error is not retried, because `include` or `exclude` stops it.
+
+The caller then gets the result of the recover method, not the error.
+
+```java
+@Service
+class GreetingService {
+    @ReactiveRetryable(include = IOException.class, maxAttempts = 2)
+    public Mono<String> greet(String name) {
+        return client.fetchGreeting(name);
+    }
+
+    @ReactiveRecover
+    public Mono<String> greetFallback(IOException error, String name) {
+        return Mono.just("Hello, " + name);
+    }
+}
+```
+
+#### How the library finds the recover method
+
+- If you set `recover`, the library uses the `@ReactiveRecover` method with that name, for example
+  `@ReactiveRetryable(recover = "greetFallback")`.
+- If `recover` is empty, the library examines the `@ReactiveRecover` methods of the bean's class and
+  its superclasses. It uses the methods that have a fitting signature.
+- If more than one method fits, the library uses the method whose `Throwable` parameter is the
+  closest supertype of the error. A method without a `Throwable` parameter is the last choice.
+
+#### Signature rules
+
+- The first parameter is optional. If you add it, it must be a `Throwable` type. The library calls
+  the method only if the error is an instance of this type.
+- The other parameters must have the same types as the parameters of the retryable method. They
+  get the same argument values.
+- A `Mono<T>` method recovers a `Mono<T>` method. A `Flux<T>` method recovers a `Flux<T>` method.
+- A `suspend` function recovers a `suspend` function. The return types must be compatible.
+
+#### Errors
+
+- The recover method gets the last error, not Reactor's `RetryExhaustedException`.
+- If no recover method fits the error, the caller gets the last error.
+- If the recover method fails, the caller gets the error of the recover method.
+- If `recover` names a method that does not exist or does not fit, the first call fails with an
+  `IllegalStateException`.
+
+#### Other rules
+
+- The library calls the recover method on the target object, not through the proxy. Thus, other
+  advice (for example `@Transactional`) does not apply to the recover method.
+- A recover method in a class with a class-level `@ReactiveRetryable` is not retried.
+- A method can have `@ReactiveRetryable` and `@ReactiveRecover` together. A call through the proxy
+  retries it. As a recover method, it is called one time. It never recovers itself.
+- Recovery does not apply to a custom interceptor bean. If you set `interceptor` and `recover`
+  together, the first call fails with an `IllegalStateException`.
+
+In Kotlin, a `suspend` recover function gets the coroutine context of the caller:
+
+```kotlin
+@Service
+class GreetingService(private val client: GreetingClient) {
+    @ReactiveRetryable(include = [IOException::class], maxAttempts = 2)
+    suspend fun greet(name: String): String = client.fetchGreeting(name)
+
+    @ReactiveRecover
+    suspend fun greetFallback(error: IOException, name: String): String = "Hello, $name"
+}
+```
+
 ### Custom Interceptor
 
 By default, ProjectReactor Retry AOP uses the `ReactiveRetryInterceptor` to intercept failed reactive operations based
@@ -128,6 +202,8 @@ Use this library if you need one of these features:
   to the publisher that the first call returned.
 - **Consecutive failures** with `shouldCheckMaxInRow`. This is useful for long-lived streams.
 - **A custom interceptor bean** for each method, with the `interceptor` attribute.
+- **Recovery.** A `@ReactiveRecover` method gives a fallback result when the retries fail. Spring's
+  `@Retryable` has no recovery.
 - **Kotlin `suspend` functions.** Spring's `@Retryable` calls a `suspend` function one time only.
 
 ### Other differences
@@ -147,25 +223,25 @@ The tests in [`kotlin-interop-tests`](kotlin-interop-tests) show these differenc
 
 Use this table if you move from one annotation to the other.
 
-| This library                | Spring Framework 7                           | Notes                                                                                                   |
-|-----------------------------|----------------------------------------------|---------------------------------------------------------------------------------------------------------|
-| `@EnableReactiveRetry`      | `@EnableResilientMethods`                    | Spring also enables `@ConcurrencyLimit`.                                                                |
-| `proxyTargetClass`          | `proxyTargetClass`                           | Same meaning.                                                                                           |
-| `order`                     | `order`                                      | The Spring default is `Ordered.LOWEST_PRECEDENCE - 1`.                                                  |
-| `include`                   | `includes` (or `value`)                      | Both examine the nested causes.                                                                         |
-| `exclude`                   | `excludes`                                   | Both examine the nested causes.                                                                         |
-| `maxAttempts`               | `maxRetries`                                 | Both count the retries after the first call. The default is 3 for both.                                 |
-| (no delay)                  | `delay`                                      | The Spring default is 1000 ms. Set `delay = 0` for no delay.                                            |
-| `backOffFixDelay`           | `delay`                                      | The Spring default `multiplier` is 1.0, which gives a fixed delay.                                      |
-| `exponentialBackoff = true` | `delay = 100, multiplier = 2.0, jitter = 50` | These values are the defaults of this library for exponential backoff.                                  |
-| `backOffMinDelay`           | `delay`                                      | The first delay.                                                                                        |
-| `backOffMaxDelay`           | `maxDelay`                                   |                                                                                                         |
-| `backOffFactor`             | `jitter`                                     | This library uses a factor (0 to 1). Spring uses a duration. Set `jitter` to `backOffFactor` × `delay`. |
-| `shouldCheckMaxInRow`       | No equivalent                                |                                                                                                         |
-| `interceptor`               | No equivalent                                | Spring has `predicate` (a `MethodRetryPredicate`) for a custom retry decision.                          |
-| `@ReactiveRecover`          | No equivalent                                | Put `@Retryable` on the methods, not on the class.                                                      |
-| No equivalent               | `timeout`                                    | A time limit for all the attempts together.                                                             |
-| No equivalent               | `*String` attributes                         | Values from placeholders, for example `delayString = "${retry.delay}"`.                                 |
+| This library                  | Spring Framework 7                           | Notes                                                                                                                                                         |
+|-------------------------------|----------------------------------------------|---------------------------------------------------------------------------------------------------------------------------------------------------------------|
+| `@EnableReactiveRetry`        | `@EnableResilientMethods`                    | Spring also enables `@ConcurrencyLimit`.                                                                                                                      |
+| `proxyTargetClass`            | `proxyTargetClass`                           | Same meaning.                                                                                                                                                 |
+| `order`                       | `order`                                      | The Spring default is `Ordered.LOWEST_PRECEDENCE - 1`.                                                                                                        |
+| `include`                     | `includes` (or `value`)                      | Both examine the nested causes.                                                                                                                               |
+| `exclude`                     | `excludes`                                   | Both examine the nested causes.                                                                                                                               |
+| `maxAttempts`                 | `maxRetries`                                 | Both count the retries after the first call. The default is 3 for both.                                                                                       |
+| (no delay)                    | `delay`                                      | The Spring default is 1000 ms. Set `delay = 0` for no delay.                                                                                                  |
+| `backOffFixDelay`             | `delay`                                      | The Spring default `multiplier` is 1.0, which gives a fixed delay.                                                                                            |
+| `exponentialBackoff = true`   | `delay = 100, multiplier = 2.0, jitter = 50` | These values are the defaults of this library for exponential backoff.                                                                                        |
+| `backOffMinDelay`             | `delay`                                      | The first delay.                                                                                                                                              |
+| `backOffMaxDelay`             | `maxDelay`                                   |                                                                                                                                                               |
+| `backOffFactor`               | `jitter`                                     | This library uses a factor (0 to 1). Spring uses a duration. Set `jitter` to `backOffFactor` × `delay`.                                                       |
+| `shouldCheckMaxInRow`         | No equivalent                                |                                                                                                                                                               |
+| `interceptor`                 | No equivalent                                | Spring has `predicate` (a `MethodRetryPredicate`) for a custom retry decision.                                                                                |
+| `@ReactiveRecover`, `recover` | No equivalent                                | Spring has no recovery. Use `onErrorResume` on the returned publisher. A `@ReactiveRecover` method is also not retried by a class-level `@ReactiveRetryable`. |
+| No equivalent                 | `timeout`                                    | A time limit for all the attempts together.                                                                                                                   |
+| No equivalent                 | `*String` attributes                         | Values from placeholders, for example `delayString = "${retry.delay}"`.                                                                                       |
 
 ## Contributing
 

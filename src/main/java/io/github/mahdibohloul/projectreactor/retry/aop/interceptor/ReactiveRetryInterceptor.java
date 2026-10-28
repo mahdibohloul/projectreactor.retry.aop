@@ -26,8 +26,17 @@ public abstract class ReactiveRetryInterceptor implements MethodInterceptor {
 
 	private final Retry retryPolicy;
 
+	private @Nullable ReactiveRecoverer recoverer;
+
 	protected ReactiveRetryInterceptor(Retry retryPolicy) {
 		this.retryPolicy = retryPolicy;
+	}
+
+	/**
+	 * Set by the builder before the interceptor is used.
+	 */
+	void setRecoverer(@Nullable ReactiveRecoverer recoverer) {
+		this.recoverer = recoverer;
 	}
 
 	/**
@@ -40,6 +49,10 @@ public abstract class ReactiveRetryInterceptor implements MethodInterceptor {
 	 * classpath: Spring AOP exposes their result to interceptors as a {@link Mono}
 	 * (or a {@link Flux} for a {@code Flow} result), and awaits the retried
 	 * publisher on the way out.
+	 *
+	 * <p>
+	 * If a {@link ReactiveRecoverer} is set, it can replace the error after the
+	 * retries with another publisher.
 	 *
 	 * @param invocation
 	 *            the method invocation joinpoint
@@ -60,23 +73,40 @@ public abstract class ReactiveRetryInterceptor implements MethodInterceptor {
 	}
 
 	private Mono<?> retryMono(MethodInvocation invocation) {
-		return Mono.defer(() -> {
+		Mono<Object> retried = Mono.defer(() -> {
 			try {
-				return Mono.from((Publisher<?>) ReactiveRetryUtil.invocableClone(invocation).proceed());
+				return Mono.<Object>from((Publisher<?>) ReactiveRetryUtil.invocableClone(invocation).proceed());
 			} catch (Throwable t) {
 				return Mono.error(t);
 			}
 		}).retryWhen(this.retryPolicy);
+		ReactiveRecoverer recoverer = this.recoverer;
+		if (recoverer == null)
+			return retried;
+		return retried.onErrorResume(error -> Mono.<Object>from(recover(recoverer, invocation, error)));
 	}
 
 	private Flux<?> retryFlux(MethodInvocation invocation) {
-		return Flux.defer(() -> {
+		Flux<Object> retried = Flux.defer(() -> {
 			try {
-				return Flux.from((Publisher<?>) ReactiveRetryUtil.invocableClone(invocation).proceed());
+				return Flux.<Object>from((Publisher<?>) ReactiveRetryUtil.invocableClone(invocation).proceed());
 			} catch (Throwable t) {
 				return Flux.error(t);
 			}
 		}).retryWhen(this.retryPolicy);
+		ReactiveRecoverer recoverer = this.recoverer;
+		if (recoverer == null)
+			return retried;
+		return retried.onErrorResume(error -> Flux.<Object>from(recover(recoverer, invocation, error)));
+	}
+
+	private Publisher<?> recover(ReactiveRecoverer recoverer, MethodInvocation invocation, Throwable error) {
+		try {
+			Publisher<?> recovered = recoverer.recover(invocation, error);
+			return recovered != null ? recovered : Mono.error(error);
+		} catch (Throwable t) {
+			return Mono.error(t);
+		}
 	}
 
 	private boolean returnsFlow(Method method) {
