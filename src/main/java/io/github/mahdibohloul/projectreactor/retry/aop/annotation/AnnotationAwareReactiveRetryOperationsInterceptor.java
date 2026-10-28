@@ -7,6 +7,7 @@ import java.util.concurrent.ConcurrentHashMap;
 import java.util.concurrent.ConcurrentMap;
 import org.aopalliance.intercept.MethodInterceptor;
 import org.aopalliance.intercept.MethodInvocation;
+import org.jspecify.annotations.Nullable;
 import org.springframework.aop.IntroductionInterceptor;
 import org.springframework.beans.BeansException;
 import org.springframework.beans.factory.BeanFactory;
@@ -43,14 +44,14 @@ public class AnnotationAwareReactiveRetryOperationsInterceptor implements Introd
 	 *            the method invocation joinpoint
 	 */
 	@Override
-	public Object invoke(MethodInvocation invocation) throws Throwable {
+	public @Nullable Object invoke(MethodInvocation invocation) throws Throwable {
 		MethodInterceptor delegate = getDelegate(invocation.getThis(), invocation.getMethod());
 		if (delegate != null)
 			return delegate.invoke(invocation);
 		return invocation.proceed();
 	}
 
-	private MethodInterceptor getDelegate(Object target, Method method) {
+	private @Nullable MethodInterceptor getDelegate(@Nullable Object target, Method method) {
 		ConcurrentMap<Method, MethodInterceptor> cachedMethods = this.delegates.get(target);
 		if (cachedMethods == null)
 			cachedMethods = new ConcurrentHashMap<>();
@@ -109,7 +110,8 @@ public class AnnotationAwareReactiveRetryOperationsInterceptor implements Introd
 				.setInclude(reactiveRetryable.include()).setMaxAttempts(reactiveRetryable.maxAttempts()).build();
 	}
 
-	private <A extends Annotation> A findAnnotationOnTarget(Object target, Method method, Class<A> annotation) {
+	private <A extends Annotation> @Nullable A findAnnotationOnTarget(@Nullable Object target, Method method,
+			Class<A> annotation) {
 		try {
 			Method targetMethod = target.getClass().getMethod(method.getName(), method.getParameterTypes());
 			A ann = AnnotatedElementUtils.findMergedAnnotation(targetMethod, annotation);
@@ -121,7 +123,7 @@ public class AnnotationAwareReactiveRetryOperationsInterceptor implements Introd
 		}
 	}
 
-	private <A extends Annotation> A classLevelAnnotation(Method method, Class<A> annotation) {
+	private <A extends Annotation> @Nullable A classLevelAnnotation(Method method, Class<A> annotation) {
 		A ann = AnnotatedElementUtils.findMergedAnnotation(method.getDeclaringClass(), annotation);
 		if (ann != null && AnnotatedElementUtils.findMergedAnnotation(method, ReactiveRecover.class) != null)
 			ann = null;

@@ -2,6 +2,7 @@ package io.github.mahdibohloul.projectreactor.retry.aop.interceptor;
 
 import org.aopalliance.intercept.MethodInterceptor;
 import org.aopalliance.intercept.MethodInvocation;
+import org.jspecify.annotations.Nullable;
 import org.reactivestreams.Publisher;
 import reactor.core.publisher.Flux;
 import reactor.core.publisher.Mono;
@@ -31,7 +32,7 @@ public abstract class ReactiveRetryInterceptor implements MethodInterceptor {
 	 *             if the invocation fails
 	 */
 	@Override
-	public Object invoke(MethodInvocation invocation) throws Throwable {
+	public @Nullable Object invoke(MethodInvocation invocation) throws Throwable {
 		if (!isPublisher(invocation.getMethod().getReturnType()))
 			return invocation.proceed();
 		if (isMono(invocation.getMethod().getReturnType()))

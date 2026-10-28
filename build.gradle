@@ -32,6 +32,8 @@ dependencies {
     api 'org.springframework:spring-context'
     api 'org.springframework:spring-core'
     api 'io.projectreactor:reactor-core'
+    // Null-safety annotations on the public API, read by Kotlin 2.x callers.
+    api 'org.jspecify:jspecify'
 
     // Internal only.
     implementation 'org.slf4j:slf4j-api'
