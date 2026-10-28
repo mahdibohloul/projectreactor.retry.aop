@@ -5,3 +5,7 @@ pluginManagement {
     }
 }
 rootProject.name = 'projectreactor-retry-aop'
+
+// Test-only project: compiles Kotlin consumers against the library. It is not
+// published, so the library artifact stays free of Kotlin dependencies.
+include 'kotlin-interop-tests'
