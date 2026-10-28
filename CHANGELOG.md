@@ -6,6 +6,18 @@ The format is based on [Keep a Changelog](https://keepachangelog.com/en/1.0.0/),
 and this project adheres to [Semantic Versioning](https://semver.org/spec/v2.0.0.html).
 
 ## [Unreleased]
+### Added
+- Kotlin `suspend` functions annotated with `@ReactiveRetryable` are now retried, including `suspend` functions that return a `Flow`. This needs `kotlinx-coroutines-reactor` and `kotlin-reflect` on the classpath.
+- JSpecify null-safety annotations (`@NullMarked`) on the public API, so Kotlin sees non-null types.
+- `kotlin-interop-tests`, a test-only project that uses the library from Kotlin 2.4 and records how Spring Framework 7's own `@Retryable` behaves on reactive methods.
+- A comparison with Spring Framework 7's `@Retryable` in the README.
+### Changed
+- **Breaking:** the baseline is now Spring Framework 7.0 (Spring Boot 4) and Project Reactor 3.8. Use 2.0.0 with Spring Framework 6.2 (Spring Boot 3).
+- **Breaking:** `include` and `exclude` now also match the nested causes of an error, not only the error itself. An error that Reactor wraps (for example with `Exceptions.propagate`) is now retried when its cause is included. An excluded cause prevents the retry, even if the error itself is included.
+- `suspend` functions in a class with a class-level `@ReactiveRetryable` are now retried. Before, they were called one time only.
+- Built with Gradle 9.8, Spotless 8.10, and the Maven Publish plugin 0.37.
+### Removed
+- The `repo.spring.io/release` plugin repository, which now needs authentication.
 
 ## [2.0.0]
 ### Added
