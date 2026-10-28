@@ -75,7 +75,11 @@ final class RecoverMethodRecoverer implements ReactiveRecoverer {
 		for (Method recoverMethod : recoverMethods(targetClass)) {
 			if (byName && !recoverMethod.getName().equals(recoverName))
 				continue;
-			String misfit = misfit(targetClass, method, recoverMethod);
+			// A method with both annotations must not recover itself: that would call it
+			// one more time after its own retries fail.
+			String misfit = isSameMethod(method, recoverMethod)
+					? "a method cannot recover itself"
+					: misfit(targetClass, method, recoverMethod);
 			if (misfit == null)
 				candidates.add(new Candidate(recoverMethod, errorType(method, recoverMethod)));
 			else
@@ -175,6 +179,11 @@ final class RecoverMethodRecoverer implements ReactiveRecoverer {
 		if (!returnType.isAssignableFrom(recoverReturnType))
 			return "its return type " + recoverReturnType + " is not compatible with " + returnType;
 		return null;
+	}
+
+	private static boolean isSameMethod(Method method, Method recoverMethod) {
+		return method.getName().equals(recoverMethod.getName())
+				&& Arrays.equals(method.getParameterTypes(), recoverMethod.getParameterTypes());
 	}
 
 	private static @Nullable Class<?> errorType(Method method, Method recoverMethod) {

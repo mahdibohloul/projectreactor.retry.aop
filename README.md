@@ -151,6 +151,8 @@ class GreetingService {
 - The library calls the recover method on the target object, not through the proxy. Thus, other
   advice (for example `@Transactional`) does not apply to the recover method.
 - A recover method in a class with a class-level `@ReactiveRetryable` is not retried.
+- A method can have `@ReactiveRetryable` and `@ReactiveRecover` together. A call through the proxy
+  retries it. As a recover method, it is called one time. It never recovers itself.
 - Recovery does not apply to a custom interceptor bean. If you set `interceptor` and `recover`
   together, the first call fails with an `IllegalStateException`.
 

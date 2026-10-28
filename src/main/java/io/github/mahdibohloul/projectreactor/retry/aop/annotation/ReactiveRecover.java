@@ -60,6 +60,10 @@ import org.springframework.context.annotation.Import;
  * {@link ReactiveRetryable} declaration.
  *
  * <p>
+ * A method can also have a method-level {@link ReactiveRetryable} annotation. A
+ * call through the proxy retries it. A method never recovers itself.
+ *
+ * <p>
  * Recovery does not apply to a custom interceptor bean that
  * {@link ReactiveRetryable#interceptor()} names.
  *

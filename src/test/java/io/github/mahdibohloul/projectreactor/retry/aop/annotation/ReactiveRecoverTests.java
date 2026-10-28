@@ -115,6 +115,35 @@ class ReactiveRecoverTests {
 	}
 
 	@Test
+	void aMethodWithBothAnnotationsDoesNotRecoverItself() {
+		SelfService service = bean(Config.class, SelfService.class);
+		// The first call and two retries. No fourth call as its own recover method.
+		StepVerifier.create(service.both('x'))
+				.expectErrorMatches(
+						error -> error instanceof IllegalStateException && "both call 3".equals(error.getMessage()))
+				.verify();
+		Assertions.assertEquals(3, service.calls());
+	}
+
+	@Test
+	void aMethodWithBothAnnotationsRecoversAnotherMethodWithoutRetry() {
+		SelfService service = bean(Config.class, SelfService.class);
+		StepVerifier.create(service.other('y'))
+				.expectErrorMatches(
+						error -> error instanceof IllegalStateException && "both call 1".equals(error.getMessage()))
+				.verify();
+		Assertions.assertEquals(3, service.otherCalls());
+		Assertions.assertEquals(1, service.calls());
+	}
+
+	@Test
+	void recoverNamingTheMethodItselfFails() {
+		SelfService service = bean(Config.class, SelfService.class);
+		IllegalStateException error = Assertions.assertThrows(IllegalStateException.class, service::selfNamed);
+		Assertions.assertTrue(error.getMessage().contains("cannot recover itself"), error.getMessage());
+	}
+
+	@Test
 	void fluxRecovery() {
 		MiscService service = bean(Config.class, MiscService.class);
 		StepVerifier.create(service.flux("a", "b")).expectNext("a", "a", "a", "recovered:a:b:flux error")
@@ -195,6 +224,11 @@ class ReactiveRecoverTests {
 		@Bean
 		InvalidService invalidService() {
 			return new InvalidService();
+		}
+
+		@Bean
+		SelfService selfService() {
+			return new SelfService();
 		}
 
 		@Bean
@@ -390,6 +424,38 @@ class ReactiveRecoverTests {
 					return Mono.error(new IllegalArgumentException("recover failed"));
 				return Mono.just(error.getMessage() + " recovered");
 			});
+		}
+	}
+
+	static class SelfService {
+		final AtomicInteger calls = new AtomicInteger();
+		final AtomicInteger otherCalls = new AtomicInteger();
+
+		public int calls() {
+			return this.calls.get();
+		}
+
+		public int otherCalls() {
+			return this.otherCalls.get();
+		}
+
+		@ReactiveRetryable(maxAttempts = 2)
+		@ReactiveRecover
+		public Mono<String> both(Character id) {
+			return Mono.error(new IllegalStateException("both call " + this.calls.incrementAndGet()));
+		}
+
+		// "both" fits it by signature.
+		@ReactiveRetryable(maxAttempts = 2)
+		public Mono<String> other(Character id) {
+			this.otherCalls.incrementAndGet();
+			return Mono.error(new IllegalStateException("other"));
+		}
+
+		@ReactiveRetryable(recover = "selfNamed")
+		@ReactiveRecover
+		public Mono<String> selfNamed() {
+			return Mono.just("never called");
 		}
 	}
 
