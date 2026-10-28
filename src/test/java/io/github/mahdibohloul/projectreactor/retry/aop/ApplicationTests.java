@@ -3,11 +3,13 @@ package io.github.mahdibohloul.projectreactor.retry.aop;
 import io.github.mahdibohloul.projectreactor.retry.aop.annotation.EnableReactiveRetry;
 import io.github.mahdibohloul.projectreactor.retry.aop.annotation.ReactiveRetryable;
 import io.github.mahdibohloul.projectreactor.retry.aop.interceptor.ReactiveRetryInterceptorBuilder;
+import java.io.IOException;
 import java.util.Properties;
 import org.aopalliance.intercept.MethodInterceptor;
 import org.springframework.context.annotation.Bean;
 import org.springframework.context.annotation.Configuration;
 import org.springframework.context.support.PropertySourcesPlaceholderConfigurer;
+import reactor.core.Exceptions;
 import reactor.core.publisher.Flux;
 import reactor.core.publisher.Mono;
 
@@ -65,6 +67,11 @@ public class ApplicationTests {
 		@Bean
 		public TransientErrorsBackOffService transientErrorsBackOffService() {
 			return new TransientErrorsBackOffService();
+		}
+
+		@Bean
+		public CauseMatchingService causeMatchingService() {
+			return new CauseMatchingService();
 		}
 	}
 
@@ -221,6 +228,48 @@ public class ApplicationTests {
 
 		public int getSubscriptions() {
 			return subscriptions;
+		}
+	}
+
+	/**
+	 * Signals errors whose configured type is a nested cause, not the error itself.
+	 */
+	public static class CauseMatchingService {
+		private int count = 0;
+
+		/**
+		 * Reactor wraps the checked exception in an unchecked one.
+		 */
+		@ReactiveRetryable(include = IOException.class)
+		public Mono<Void> includedCause() {
+			return Mono.defer(() -> {
+				if (this.count++ < 2)
+					return Mono.error(Exceptions.propagate(new IOException("error")));
+				return Mono.empty();
+			});
+		}
+
+		@ReactiveRetryable(include = IllegalStateException.class, exclude = IllegalArgumentException.class)
+		public Mono<Void> excludedCause() {
+			return Mono.defer(() -> {
+				this.count++;
+				return Mono.error(new IllegalStateException("error", new IllegalArgumentException("cause")));
+			});
+		}
+
+		@ReactiveRetryable(include = IOException.class)
+		public Mono<Void> loopingCauses() {
+			return Mono.defer(() -> {
+				this.count++;
+				RuntimeException first = new RuntimeException("first");
+				RuntimeException second = new RuntimeException("second", first);
+				first.initCause(second);
+				return Mono.error(first);
+			});
+		}
+
+		public int getCount() {
+			return count;
 		}
 	}
 

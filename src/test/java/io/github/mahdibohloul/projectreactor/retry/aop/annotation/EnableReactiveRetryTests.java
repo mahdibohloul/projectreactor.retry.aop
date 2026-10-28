@@ -2,6 +2,7 @@ package io.github.mahdibohloul.projectreactor.retry.aop.annotation;
 
 import io.github.mahdibohloul.projectreactor.retry.aop.ApplicationTests;
 import io.github.mahdibohloul.projectreactor.retry.aop.interceptor.ReactiveRetryable;
+import java.time.Duration;
 import java.util.Objects;
 import org.junit.jupiter.api.Assertions;
 import org.junit.jupiter.api.Test;
@@ -121,6 +122,36 @@ class EnableReactiveRetryTests {
 				.getBean(ApplicationTests.InheritedExcludesBackOffService.class);
 		Assertions.assertTrue(AopUtils.isAopProxy(service));
 		StepVerifier.create(service.service()).expectError(ApplicationTests.ChildIllegalStateException.class).verify();
+		Assertions.assertEquals(1, service.getCount());
+		context.close();
+	}
+
+	@Test
+	void includedCause() {
+		AnnotationConfigApplicationContext context = new AnnotationConfigApplicationContext(
+				ApplicationTests.TestConfiguration.class);
+		ApplicationTests.CauseMatchingService service = context.getBean(ApplicationTests.CauseMatchingService.class);
+		StepVerifier.create(service.includedCause()).verifyComplete();
+		Assertions.assertEquals(3, service.getCount());
+		context.close();
+	}
+
+	@Test
+	void excludedCauseWinsOverIncludedError() {
+		AnnotationConfigApplicationContext context = new AnnotationConfigApplicationContext(
+				ApplicationTests.TestConfiguration.class);
+		ApplicationTests.CauseMatchingService service = context.getBean(ApplicationTests.CauseMatchingService.class);
+		StepVerifier.create(service.excludedCause()).expectError(IllegalStateException.class).verify();
+		Assertions.assertEquals(1, service.getCount());
+		context.close();
+	}
+
+	@Test
+	void loopingCausesAreNotRetried() {
+		AnnotationConfigApplicationContext context = new AnnotationConfigApplicationContext(
+				ApplicationTests.TestConfiguration.class);
+		ApplicationTests.CauseMatchingService service = context.getBean(ApplicationTests.CauseMatchingService.class);
+		StepVerifier.create(service.loopingCauses()).expectError(RuntimeException.class).verify(Duration.ofSeconds(5));
 		Assertions.assertEquals(1, service.getCount());
 		context.close();
 	}
