@@ -1,12 +1,15 @@
 plugins {
     id 'java-library'
     id 'io.spring.dependency-management' version '1.1.7'
-    id 'com.diffplug.spotless' version '7.0.3'
-    id 'com.vanniktech.maven.publish' version '0.34.0'
+    id 'com.diffplug.spotless' version '8.10.3'
+    id 'com.vanniktech.maven.publish' version '0.37.0'
 }
 
+// Also used by the Kotlin interoperability tests.
+ext.springBootVersion = '4.1.1'
+
 group = 'io.github.mahdibohloul'
-version = '2.0.0'
+version = '3.0.0-SNAPSHOT'
 
 java {
     toolchain {
@@ -20,7 +23,7 @@ repositories {
 
 dependencyManagement {
     imports {
-        mavenBom "org.springframework.boot:spring-boot-dependencies:3.5.3"
+        mavenBom "org.springframework.boot:spring-boot-dependencies:${springBootVersion}"
     }
 }
 
@@ -29,6 +32,8 @@ dependencies {
     api 'org.springframework:spring-context'
     api 'org.springframework:spring-core'
     api 'io.projectreactor:reactor-core'
+    // Null-safety annotations on the public API, read by Kotlin 2.x callers.
+    api 'org.jspecify:jspecify'
 
     // Internal only.
     implementation 'org.slf4j:slf4j-api'

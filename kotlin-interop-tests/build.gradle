@@ -1,0 +1,42 @@
+// Compiles and runs Kotlin consumers of the library with the latest Kotlin
+// release. This project is not published.
+plugins {
+    id 'org.jetbrains.kotlin.jvm' version '2.4.20'
+    // Opens Spring-annotated classes so that they can be proxied, as in a
+    // typical Kotlin Spring application.
+    id 'org.jetbrains.kotlin.plugin.spring' version '2.4.20'
+    id 'io.spring.dependency-management'
+}
+
+repositories {
+    mavenCentral()
+}
+
+kotlin {
+    jvmToolchain(21)
+}
+
+dependencyManagement {
+    imports {
+        mavenBom("org.springframework.boot:spring-boot-dependencies:${springBootVersion}") {
+            // Align the Kotlin libraries with the compiler, not with the BOM.
+            bomProperty 'kotlin.version', kotlin.coreLibrariesVersion
+        }
+    }
+}
+
+dependencies {
+    testImplementation project(':')
+    testImplementation 'org.jetbrains.kotlinx:kotlinx-coroutines-reactor'
+    testImplementation 'io.projectreactor:reactor-test'
+    testImplementation 'org.junit.jupiter:junit-jupiter'
+
+    testRuntimeOnly 'org.aspectj:aspectjweaver'
+    // Spring needs it to call suspending functions through a proxy.
+    testRuntimeOnly 'org.jetbrains.kotlin:kotlin-reflect'
+    testRuntimeOnly 'org.junit.platform:junit-platform-launcher'
+}
+
+tasks.named('test') {
+    useJUnitPlatform()
+}

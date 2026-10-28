@@ -1,6 +1,9 @@
 package io.github.mahdibohloul.projectreactor.retry.aop.interceptor;
 
 import java.time.Duration;
+import java.util.Collections;
+import java.util.IdentityHashMap;
+import java.util.Set;
 import org.aopalliance.intercept.MethodInterceptor;
 import org.slf4j.Logger;
 import org.slf4j.LoggerFactory;
@@ -41,7 +44,7 @@ public abstract class ReactiveRetryInterceptorBuilder<T extends MethodIntercepto
 
 	/**
 	 * Sets the types of exceptions that should be retried. If this array is empty,
-	 * all
+	 * all exceptions are retried. The error and its nested causes are matched.
 	 *
 	 * @param retryOn
 	 *            the types of exceptions that should be retried.
@@ -55,7 +58,8 @@ public abstract class ReactiveRetryInterceptorBuilder<T extends MethodIntercepto
 
 	/**
 	 * Sets the types of exception that should be excluded from retry. If this array
-	 * is empty, no exceptions will be excluded.
+	 * is empty, no exceptions will be excluded. The error and its nested causes are
+	 * matched, and an exclusion wins over an inclusion.
 	 *
 	 * @param excludeFromRetryOn
 	 *            the types of exceptions that should be excluded from retry.
@@ -110,17 +114,33 @@ public abstract class ReactiveRetryInterceptorBuilder<T extends MethodIntercepto
 		return new MaxAttemptsRetryInterceptorBuilder();
 	}
 
+	/**
+	 * Decides whether the given error is retried. The error and its nested causes
+	 * are matched against the configured types, because Reactor often wraps the
+	 * original error (for example in {@link reactor.core.Exceptions#propagate}). An
+	 * excluded type in the cause chain prevents the retry, even if an included type
+	 * is also in the chain.
+	 *
+	 * @param throwable
+	 *            the error signalled by the publisher
+	 * @return whether the error is retried
+	 */
 	protected boolean errorFilter(Throwable throwable) {
-		for (Class<? extends Throwable> ex : this.excludeFromRetryOn) {
-			if (ex.isAssignableFrom(throwable.getClass()))
-				return false;
-		}
-		if (this.retryOn.length == 0)
-			return true;
+		if (matchesCauseChain(throwable, this.excludeFromRetryOn))
+			return false;
+		return this.retryOn.length == 0 || matchesCauseChain(throwable, this.retryOn);
+	}
 
-		for (Class<? extends Throwable> ex : this.retryOn) {
-			if (ex.isAssignableFrom(throwable.getClass()))
-				return true;
+	private static boolean matchesCauseChain(Throwable throwable, Class<? extends Throwable>[] types) {
+		if (types.length == 0)
+			return false;
+		// Guards against cause chains that loop back on themselves.
+		Set<Throwable> visited = Collections.newSetFromMap(new IdentityHashMap<>());
+		for (Throwable current = throwable; current != null && visited.add(current); current = current.getCause()) {
+			for (Class<? extends Throwable> type : types) {
+				if (type.isInstance(current))
+					return true;
+			}
 		}
 		return false;
 	}

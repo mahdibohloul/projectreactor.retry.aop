@@ -50,6 +50,10 @@ public @interface ReactiveRetryable {
 	 * The types of exceptions that should be retried. If this array is empty, all
 	 * exceptions are retried.
 	 *
+	 * <p>
+	 * The error and its nested causes are matched, so an included type that Reactor
+	 * wraps in another exception is still retried.
+	 *
 	 * @return The types of exceptions that should be retried.
 	 */
 	Class<? extends Throwable>[] include() default {};
@@ -57,6 +61,11 @@ public @interface ReactiveRetryable {
 	/**
 	 * The types of exception that should be excluded from retry. If this array is
 	 * empty, no exceptions will be excluded.
+	 *
+	 * <p>
+	 * The error and its nested causes are matched. An excluded type in the cause
+	 * chain prevents the retry, even if an {@link #include() included} type is also
+	 * in the chain.
 	 *
 	 * @return The types of exceptions that should be excluded from retry.
 	 */

@@ -11,6 +11,8 @@ bug reports, feature requests, documentation, and code.
    ```bash
    ./gradlew clean check
    ```
+   This also runs the Kotlin tests in `kotlin-interop-tests`. Gradle downloads the Kotlin
+   compiler, so you do not need to install it.
 
 ## Development Workflow
 
