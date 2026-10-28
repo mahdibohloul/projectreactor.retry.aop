@@ -7,6 +7,8 @@ and this project adheres to [Semantic Versioning](https://semver.org/spec/v2.0.0
 
 ## [Unreleased]
 ### Added
+- Recovery with `@ReactiveRecover`. When the retries of a `@ReactiveRetryable` method fail, or the error is not retried, the library calls a recover method of the same bean and returns its result to the caller. The new `recover` attribute of `@ReactiveRetryable` names the recover method. If `recover` is empty, the library finds the recover method by its signature. `suspend` recover functions get the coroutine context of the caller.
+- `ReactiveRecoverer` and `ReactiveRetryInterceptorBuilder.setRecoverer`, to add recovery to an interceptor that you build.
 - Kotlin `suspend` functions annotated with `@ReactiveRetryable` are now retried, including `suspend` functions that return a `Flow`. This needs `kotlinx-coroutines-reactor` and `kotlin-reflect` on the classpath.
 - JSpecify null-safety annotations (`@NullMarked`) on the public API, so Kotlin sees non-null types.
 - `kotlin-interop-tests`, a test-only project that uses the library from Kotlin 2.4 and records how Spring Framework 7's own `@Retryable` behaves on reactive methods.
