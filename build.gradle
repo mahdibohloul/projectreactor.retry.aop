@@ -6,7 +6,7 @@ plugins {
 }
 
 // Also used by the Kotlin interoperability tests.
-ext.springBootVersion = '4.1.1'
+ext.springBootVersion = '4.1.2'
 
 group = 'io.github.mahdibohloul'
 version = '3.0.0-SNAPSHOT'
