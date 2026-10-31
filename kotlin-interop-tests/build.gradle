@@ -1,7 +1,7 @@
 // Compiles and runs Kotlin consumers of the library with the latest Kotlin
 // release. This project is not published.
 plugins {
-    id 'org.jetbrains.kotlin.jvm' version '2.4.20'
+    id 'org.jetbrains.kotlin.jvm' version '2.4.21'
     // Opens Spring-annotated classes so that they can be proxied, as in a
     // typical Kotlin Spring application.
     id 'org.jetbrains.kotlin.plugin.spring' version '2.4.20'
